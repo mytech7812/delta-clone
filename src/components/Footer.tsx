@@ -1,22 +1,21 @@
 import { Mail, ExternalLink } from "lucide-react";
 
 const footerLinks = {
-  Products: ["Futures Trading", "Options Trading", "TradFi", "Markets"],
-  Information: ["Trading Fees", "Contract Specifications", "Settlement Prices", "APIs"],
-  Resources: ["Demo Trading", "Trade Data", "API Docs", "Refer & Earn"],
-  Help: ["Support Center", "Raise Ticket", "User Guide", "Platform Status"],
+  Products: ["Swap", "Staking", "Portfolio", "Trading"],
+  Information: ["Fees", "Security", "APIs", "Terms of Service"],
+  Resources: ["Help Center", "Blog", "API Docs", "Refer & Earn"],
+  Help: ["Support Center", "Raise Ticket", "User Guide", "Status"],
 };
 
 const Footer = () => {
   return (
     <footer className="bg-foreground text-background">
       <div className="container py-12 md:py-16">
-        {/* Support banner */}
         <div className="flex flex-wrap items-center justify-between gap-4 pb-8 mb-8 border-b border-background/10">
           <h3 className="text-xl font-bold">24x7 Customer Support</h3>
           <div className="flex flex-wrap items-center gap-6">
-            <a href="mailto:support@delta.exchange" className="flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors">
-              <Mail className="w-4 h-4" /> support@delta.exchange
+            <a href="mailto:support@anexmintmining.com" className="flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors">
+              <Mail className="w-4 h-4" /> support@anexmintmining.com
             </a>
             <a href="#" className="flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors">
               <ExternalLink className="w-4 h-4" /> Raise a Ticket
@@ -44,12 +43,12 @@ const Footer = () => {
         <div className="border-t border-background/10 pt-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2 font-bold text-lg">
             <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-extrabold text-xs">Δ</span>
+              <span className="text-primary-foreground font-extrabold text-xs">A</span>
             </div>
-            Delta Exchange
+            AnexmintMining
           </div>
           <p className="text-xs text-background/40">
-            © {new Date().getFullYear()} Delta Exchange. All rights reserved.
+            © {new Date().getFullYear()} AnexmintMining. All rights reserved.
           </p>
         </div>
       </div>
