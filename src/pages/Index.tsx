@@ -7,18 +7,19 @@ import FeaturesSection from "@/components/FeaturesSection";
 import WhyChooseSection from "@/components/WhyChooseSection";
 import InvestorsSection from "@/components/InvestorsSection";
 import Footer from "@/components/Footer";
+import ScrollReveal from "@/components/ScrollReveal";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSection />
-      <SwapSection />
-      <StakeSection />
-      <AssetsSection />
-      <FeaturesSection />
-      <WhyChooseSection />
-      <InvestorsSection />
+      <ScrollReveal><SwapSection /></ScrollReveal>
+      <ScrollReveal><StakeSection /></ScrollReveal>
+      <ScrollReveal><AssetsSection /></ScrollReveal>
+      <ScrollReveal><FeaturesSection /></ScrollReveal>
+      <ScrollReveal><WhyChooseSection /></ScrollReveal>
+      <ScrollReveal><InvestorsSection /></ScrollReveal>
       <Footer />
     </div>
   );
