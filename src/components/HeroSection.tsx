@@ -1,10 +1,10 @@
 import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import heroPhone from "@/assets/hero-phone.png";
 import dashboardDesktop from "@/assets/dashboard-desktop.png";
-import BrandTicker from "./ui/brand-ticker";
 
 const highlights = [
   "Crypto Deposits & Withdrawals",
@@ -19,6 +19,8 @@ const HeroSection = () => {
     target: imageRef,
     offset: ["start end", "end start"],
   });
+
+  const navigate = useNavigate();
 
   // 3D tilt: tilts as you scroll past, returns to normal
   const rotateX = useTransform(scrollYProgress, [0, 0.3, 0.5, 0.7, 1], [0, 12, 0, -8, 0]);
@@ -41,6 +43,7 @@ const HeroSection = () => {
             <Button
               size="lg"
               className="w-full md:w-auto text-base font-semibold px-8 py-6 rounded-full"
+              onClick={() => navigate("/signup")}
             >
               Sign Up Now
             </Button>
@@ -84,8 +87,6 @@ const HeroSection = () => {
             />
           </div>
         </div>
-        {/* Brand ticker moved up below the hero image */}
-        <BrandTicker />
       </div>
 
       {/* Ticker bar */}
