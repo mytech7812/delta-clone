@@ -65,7 +65,7 @@ const HeroSection = () => {
             <motion.img
               src={dashboardDesktop}
               alt="AnexmintMining dashboard"
-              className="relative z-10 w-full max-w-[600px] rounded-xl drop-shadow-2xl hidden md:block"
+              className="relative z-10 w-[115%] max-w-[690px] rounded-xl drop-shadow-2xl hidden md:block"
               style={{
                 rotateX,
                 rotateY,
