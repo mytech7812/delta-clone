@@ -3,45 +3,45 @@ import { Layers, Wallet, BarChart3, Package, TrendingUp, Target } from "lucide-r
 const features = [
   {
     icon: Layers,
-    title: "Versatile Margining",
-    description: "Trade with margin modes of your choice: Isolated, Portfolio and Cross Margin",
+    title: "Multi-Chain Support",
+    description: "Trade across multiple blockchains seamlessly from one unified dashboard.",
   },
   {
     icon: Wallet,
-    title: "Withdraw to Crypto Wallet",
-    description: "Withdraw crypto directly into your crypto wallet",
+    title: "Self-Custody Wallet",
+    description: "Your keys, your crypto. Full control of your assets at all times.",
   },
   {
     icon: BarChart3,
-    title: "Strategy Builder",
-    description: "Create and analyse your own trades and strategies",
+    title: "Portfolio Analytics",
+    description: "Track your portfolio performance with real-time charts and insights.",
   },
   {
     icon: Package,
-    title: "Basket Orders",
-    description: "With Basket Orders place multiple orders at the same time",
+    title: "Batch Transactions",
+    description: "Execute multiple transactions simultaneously to save time and gas fees.",
   },
   {
     icon: TrendingUp,
-    title: "PNL Analytics",
-    description: "Easily analyze your daily gains and losses with best in class PNL Analytics",
+    title: "Live Market Data",
+    description: "Real-time price feeds and market data across all supported assets.",
   },
   {
     icon: Target,
-    title: "Deep OTM/ITM Options",
-    description: "Trade deep OTM/ITM options strikes with daily and weekly expiry",
+    title: "Price Alerts",
+    description: "Set custom alerts and never miss a trading opportunity again.",
   },
 ];
 
 const FeaturesSection = () => {
   return (
-    <section className="py-16 md:py-24 bg-secondary">
+    <section id="features" className="py-16 md:py-24 bg-secondary">
       <div className="container">
         <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-center">
-          Best in Class Features to Trade Options
+          Powerful Features
         </h2>
         <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-          Everything you need for professional crypto derivatives trading
+          Everything you need to manage your crypto portfolio like a pro
         </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
