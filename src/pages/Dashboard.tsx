@@ -21,7 +21,7 @@ import { ReceiveModal } from '@/components/modals/ReceiveModal';
 import { MarketOverview } from '@/components/MarketOverview';
 import { History } from '@/components/History';
 import { Settings } from '@/components/Settings';
-import { TokenBTC, TokenETH, TokenSOL, TokenBNB, TokenXRP, TokenADA, TokenUSDT } from '@web3icons/react';import '@/styles/dashboard.css';
+import { TokenBTC, TokenETH, TokenSOL, TokenBNB, TokenXRP, TokenUSDC, TokenADA, TokenUSDT } from '@web3icons/react';import '@/styles/dashboard.css';
 
 interface Transaction {
   id: number;
@@ -458,6 +458,8 @@ const getCryptoIcon = (sym: string, size: number) => {
     case 'BNB': return <TokenBNB {...iconProps} />;
     case 'XRP': return <TokenXRP {...iconProps} />;
     case 'ADA': return <TokenADA {...iconProps} />;
+    case 'USDC': return <TokenUSDC {...iconProps} />;
+
     case 'USDT': return <TokenUSDT {...iconProps} />;  // ADD THIS LINE
 
     default: return <CIcon sym={sym} size={size} />;

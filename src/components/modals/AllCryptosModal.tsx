@@ -6,11 +6,12 @@ import { Modal } from './Modal';
 
 interface AllCryptosModalProps {
   prices: Record<string, number>;
+  priceChanges: Record<string, number>;
   onClose: () => void;
   onSelect: (sym: string) => void;
 }
 
-export function AllCryptosModal({ prices, onClose, onSelect }: AllCryptosModalProps) {
+export function AllCryptosModal({ prices, priceChanges, onClose, onSelect }: AllCryptosModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   
   const filteredCryptos = CRYPTOS.filter(
@@ -20,7 +21,7 @@ export function AllCryptosModal({ prices, onClose, onSelect }: AllCryptosModalPr
   );
 
   return (
-    <Modal title={`All Cryptocurrencies `} onClose={onClose}>
+    <Modal title={`All Cryptocurrencies`} onClose={onClose}>
       <div className="search-bar">
         <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>🔍</span>
         <input
@@ -40,6 +41,7 @@ export function AllCryptosModal({ prices, onClose, onSelect }: AllCryptosModalPr
       <div style={{ maxHeight: 400, overflowY: 'auto' }}>
         {filteredCryptos.map((c) => {
           const price = prices[c.sym] || 0;
+          const change = priceChanges[c.sym] || 0;
           return (
             <button
               key={c.sym}
@@ -60,10 +62,10 @@ export function AllCryptosModal({ prices, onClose, onSelect }: AllCryptosModalPr
                 <div
                   style={{
                     fontSize: 12,
-                    color: c.chg >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)',
+                    color: change >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)',
                   }}
                 >
-                  {c.chg >= 0 ? '+' : ''}{c.chg}%
+                  {change >= 0 ? '+' : ''}{change.toFixed(2)}%
                 </div>
               </div>
             </button>

@@ -39,10 +39,10 @@ export interface Transaction {
   approved_by?: string;
 }
 
-// Get all users using the view
+// Get all users using the view (works without admin API)
 export async function getAllUsers() {
   const { data, error } = await supabase
-    .from('users_with_emails')
+    .from('users_with_profiles')
     .select('*')
     .order('created_at', { ascending: false });
   

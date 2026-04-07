@@ -11,8 +11,8 @@ import {
   getCurrentAdmin 
 } from '@/lib/database';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import { UserCard } from '@/components/admin/usercard';
-import { TransactionCard } from '@/components/admin/transactioncard';
+import { UserCard } from '@/components/admin/UserCard';
+import { TransactionCard } from '@/components/admin/TransactionCard';
 import { formatUSD, formatCrypto } from '@/lib/utils';
 import { fetchRealTimeData } from '@/lib/cryptoApi';
 import { toast } from 'sonner';
