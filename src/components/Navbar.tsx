@@ -104,7 +104,7 @@ const Navbar = ({ onLoginClick }: { onLoginClick?: () => void }) => {
             )}
 
             {user && (
-              <div className="relative">
+              <div className="relative" style={{ marginLeft: 'auto' }}>
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
                   className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold"

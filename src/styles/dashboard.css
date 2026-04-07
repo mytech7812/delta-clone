@@ -661,3 +661,13 @@
     display: flex !important;
   }
 }
+
+.bnav {
+  display: none !important;
+}
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-background-primary);
+}

@@ -21,6 +21,7 @@ import { ReceiveModal } from '@/components/modals/ReceiveModal';
 import { MarketOverview } from '@/components/MarketOverview';
 import { History } from '@/components/History';
 import { Settings } from '@/components/Settings';
+import { MobileSidebar } from '@/components/dashboard/MobileSidebar';
 import { TokenBTC, TokenETH, TokenSOL, TokenBNB, TokenXRP, TokenUSDC, TokenADA, TokenUSDT } from '@web3icons/react';import '@/styles/dashboard.css';
 
 interface Transaction {
@@ -487,89 +488,104 @@ if (loading || holdingsLoading) {
       <Sidebar activeNav={activeNav} onNavChange={setActiveNav} user={user} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-{/* Topbar - Merged with Welcome Banner */}
+{/* Topbar - Sticky with three sections */}
 <div className="topbar" style={{ 
-  display: 'flex', 
-  justifyContent: 'space-between', 
+  position: 'sticky',
+  top: 0,
+  zIndex: 20,
+  background: 'var(--color-background-primary)',
+  borderBottom: '1px solid var(--color-border-tertiary)',
+  padding: '12px 16px',
+  display: 'flex',
   alignItems: 'center',
-  padding: '12px 20px'
+  justifyContent: 'space-between',
 }}>
-  {/* Left side - Welcome message, date, and portfolio performance */}
-  <div>
-    <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: 'var(--color-text-primary)' }}>
-      Welcome back, {(() => {
-        const meta = user?.user_metadata || {};
-        const firstName = meta.first_name || meta.firstName || '';
-        const fullName = meta.full_name || meta.fullName || '';
-        const name = firstName || (fullName ? fullName.split(' ')[0] : '');
-        return name || user?.email?.split('@')[0] || 'there';
-      })()}! 👋
-    </h2>
-    <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>
-      {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-      {pricesAreStale && (
-        <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--color-text-warning)', background: 'rgba(245,158,11,0.06)', padding: '2px 6px', borderRadius: 8 }}>
-          .
-        </span>
-      )}
+  {/* Left: Menu Button + Welcome Message */}
+  <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
+    {/* Menu Button (mobile only) */}
+    <div className="mobile-menu-button">
+      {/* Menu button will be placed here by MobileSidebar component */}
     </div>
-{/* Portfolio performance - hidden on mobile */}
-<div className="desktop-only" style={{ fontSize: 12, marginTop: 4 }}>
-  <span style={{ color: 'var(--color-text-secondary)' }}>Your portfolio is </span>
-  <span style={{ color: isPositive ? 'var(--color-text-success)' : 'var(--color-text-danger)', fontWeight: 500 }}>
-    {isPositive ? '↑' : '↓'} {Math.abs(portfolioChange).toFixed(2)}%
-  </span>
-  <span style={{ color: 'var(--color-text-secondary)' }}> today</span>
-</div>
-  </div>
-  
-  {/* Right side - User menu and Deposit button */}
-  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-    {/* User Menu Dropdown */}
-    <div className="relative">
-      <button
-        onClick={() => setMenuOpen(!menuOpen)}
-        className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-blue-500 flex items-center justify-center text-white font-semibold"
-        aria-label="User menu"
-        style={{ border: 'none', cursor: 'pointer' }}
-      >
-        {(() => {
+
+    {/* Welcome Message */}
+    <div>
+      <h2 style={{ fontSize: 15, fontWeight: 500, margin: 0, color: 'var(--color-text-primary)' }}>
+        Welcome back, {(() => {
           const meta = user?.user_metadata || {};
           const firstName = meta.first_name || meta.firstName || '';
-          const lastName = meta.last_name || meta.lastName || '';
           const fullName = meta.full_name || meta.fullName || '';
-          
-          if (firstName && lastName) {
-            return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-          }
-          if (fullName) {
-            const parts = fullName.split(' ').filter(Boolean);
-            if (parts.length >= 2) {
-              return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
-            }
-            return fullName.slice(0, 2).toUpperCase();
-          }
-          return user?.email?.charAt(0).toUpperCase() || 'U';
-        })()}
-      </button>
-
-      {menuOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-background border border-border rounded-lg shadow-lg py-2 z-50">
-          <div className="px-4 py-2 border-b border-border">
-            <div className="font-medium text-sm text-foreground">
-              {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
-            </div>
-            <div className="text-xs text-muted-foreground truncate">{user?.email}</div>
-          </div>
-          <button
-            className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-secondary transition-colors"
-            onClick={handleSignOut}
-          >
-            Sign Out
-          </button>
-        </div>
-      )}
+          const name = firstName || (fullName ? fullName.split(' ')[0] : '');
+          return name || user?.email?.split('@')[0] || 'there';
+        })()}! 👋
+      </h2>
+      <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2 }}>
+        {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        {pricesAreStale && (
+          <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--color-text-warning)', background: 'rgba(245,158,11,0.06)', padding: '2px 6px', borderRadius: 8 }}>
+            .
+          </span>
+        )}
+      </div>
     </div>
+  </div>
+
+  {/* Right: User Initials */}
+  <div className="relative">
+    <button
+      onClick={() => setMenuOpen(!menuOpen)}
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 40,
+        background: 'linear-gradient(135deg, var(--brand), #00ccff)',
+        border: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        color: '#fff',
+        fontWeight: 600,
+        fontSize: 14,
+      }}
+    >
+      {(() => {
+        const meta = user?.user_metadata || {};
+        const firstName = meta.first_name || meta.firstName || '';
+        const lastName = meta.last_name || meta.lastName || '';
+        const fullName = meta.full_name || meta.fullName || '';
+        
+        if (firstName && lastName) {
+          return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+        }
+        if (fullName) {
+          const parts = fullName.split(' ').filter(Boolean);
+          if (parts.length >= 2) {
+            return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+          }
+          return fullName.slice(0, 2).toUpperCase();
+        }
+        return user?.email?.charAt(0).toUpperCase() || 'U';
+      })()}
+    </button>
+
+    {/* Dropdown Menu */}
+    {menuOpen && (
+      <div className="absolute right-0 mt-2 w-56 bg-background border border-border rounded-lg shadow-lg py-2 z-50">
+        <div className="px-4 py-2 border-b border-border">
+          <div className="font-medium text-sm text-foreground">
+            {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
+          </div>
+          <div className="text-xs text-muted-foreground truncate">{user?.email}</div>
+        </div>
+        <button
+          className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-secondary transition-colors"
+          onClick={handleSignOut}
+        >
+          Sign Out
+        </button>
+      </div>
+    )}
+
 
     {/* Deposit Button - Desktop only */}
     <button
@@ -945,19 +961,13 @@ if (loading || holdingsLoading) {
 )}
         </div>
 
-        {/* Bottom Navigation (Mobile) */}
-        <div className="bnav">
-          {NAV_ITEMS.map(({ id, label, icon }) => (
-            <button
-              key={id}
-              className={`bnav-btn${activeNav === id ? ' active' : ''}`}
-              onClick={() => setActiveNav(id)}
-            >
-              <span style={{ fontSize: 18 }}>{icon}</span>
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
+        {/* Mobile Sidebar */}
+        <MobileSidebar
+          activeNav={activeNav}
+          onNavChange={setActiveNav}
+          user={user}
+          onSignOut={handleSignOut}
+        />
       </div>
 
       {/* Modals */}
