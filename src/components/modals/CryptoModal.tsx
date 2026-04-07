@@ -6,6 +6,7 @@ interface CryptoModalProps {
   sym: string;
   holding: number;
   price: number;
+  priceChange: number;
   onClose: () => void;
   onConvert: (sym: string) => void;
   onWithdraw: (sym: string) => void;
@@ -16,6 +17,7 @@ export function CryptoModal({
   sym,
   holding,
   price,
+  priceChange,
   onClose,
   onConvert,
   onWithdraw,
@@ -23,6 +25,7 @@ export function CryptoModal({
 }: CryptoModalProps) {
   const crypto = getCrypto(sym);
   const usdValue = holding * price;
+  const isPositive = priceChange >= 0;
 
   return (
     <Modal title={crypto.name} onClose={onClose}>
@@ -35,11 +38,11 @@ export function CryptoModal({
           <div
             style={{
               fontSize: 13,
-              color: crypto.chg >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)',
+              color: isPositive ? 'var(--color-text-success)' : 'var(--color-text-danger)',
               marginTop: 2,
             }}
           >
-            {crypto.chg >= 0 ? '▲' : '▼'} {Math.abs(crypto.chg)}% (24h)
+            {isPositive ? '▲' : '▼'} {Math.abs(priceChange).toFixed(2)}% (24h)
           </div>
         </div>
       </div>

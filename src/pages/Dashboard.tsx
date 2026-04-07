@@ -21,8 +21,7 @@ import { ReceiveModal } from '@/components/modals/ReceiveModal';
 import { MarketOverview } from '@/components/MarketOverview';
 import { History } from '@/components/History';
 import { Settings } from '@/components/Settings';
-import { TokenBTC, TokenUSDT, TokenETH, TokenSOL } from '@web3icons/react';
-import '@/styles/dashboard.css';
+import { TokenBTC, TokenETH, TokenSOL, TokenBNB, TokenXRP, TokenADA, TokenUSDT } from '@web3icons/react';import '@/styles/dashboard.css';
 
 interface Transaction {
   id: number;
@@ -347,40 +346,49 @@ useEffect(() => {
   }, []);
 
 // Fetch real-time prices and 24h changes
+// Fetch real-time prices and 24h changes
 useEffect(() => {
   const loadRealTimeData = async () => {
     try {
       const { prices: realPrices, changes: realChanges } = await fetchRealTimeData();
-      setPrices(realPrices);
-      setPriceChanges(realChanges);
-      try {
+      
+      if (realPrices && Object.keys(realPrices).length > 0) {
+        setPrices(realPrices);
+        setPriceChanges(realChanges);
+        // Cache successfully fetched prices
         const payload = { prices: realPrices, changes: realChanges, ts: Date.now() };
         localStorage.setItem('anexmint:prices', JSON.stringify(payload));
         setPricesAreStale(false);
-      } catch (e) {
-        // ignore storage failures
+      } else {
+        // API returned empty data, use cached data
+        console.warn('API returned empty data, using cached prices');
+        setPricesAreStale(true);
+        // Keep existing prices (don't set to zero)
       }
     } catch (error) {
       console.error('Failed to fetch real-time data:', error);
-      // Intentionally silent: do not show toast for price fetch failures
+      // Don't show error to user - just mark as stale
+      setPricesAreStale(true);
+      // Keep existing prices, don't reset to zero
     }
   };
+  
   // Load cached prices first so UI doesn't show zeros while fetching
   try {
     const raw = localStorage.getItem('anexmint:prices');
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.prices) setPrices(parsed.prices);
-      if (parsed && parsed.changes) setPriceChanges(parsed.changes);
-      if (parsed && parsed.ts) {
+      if (parsed && parsed.prices && Object.keys(parsed.prices).length > 0) {
+        setPrices(parsed.prices);
+        setPriceChanges(parsed.changes || {});
         const age = Date.now() - Number(parsed.ts || 0);
-        setPricesAreStale(age > 10 * 60 * 1000); // stale if older than 10 minutes
+        setPricesAreStale(age > 10 * 60 * 1000);
       }
     }
   } catch (e) { /* ignore parse/storage errors */ }
 
   loadRealTimeData();
-  const interval = setInterval(loadRealTimeData, 30000); // Update every 30 seconds
+  const interval = setInterval(loadRealTimeData, 30000);
 
   return () => clearInterval(interval);
 }, []);
@@ -441,6 +449,21 @@ const handleSignOut = async () => {
   navigate('/');
 };
 
+const getCryptoIcon = (sym: string, size: number) => {
+  const iconProps = { size, variant: 'branded' as const };
+  switch(sym) {
+    case 'BTC': return <TokenBTC {...iconProps} />;
+    case 'ETH': return <TokenETH {...iconProps} />;
+    case 'SOL': return <TokenSOL {...iconProps} />;
+    case 'BNB': return <TokenBNB {...iconProps} />;
+    case 'XRP': return <TokenXRP {...iconProps} />;
+    case 'ADA': return <TokenADA {...iconProps} />;
+    case 'USDT': return <TokenUSDT {...iconProps} />;  // ADD THIS LINE
+
+    default: return <CIcon sym={sym} size={size} />;
+  }
+};
+
 if (loading || holdingsLoading) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -484,7 +507,7 @@ if (loading || holdingsLoading) {
       {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
       {pricesAreStale && (
         <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--color-text-warning)', background: 'rgba(245,158,11,0.06)', padding: '2px 6px', borderRadius: 8 }}>
-          Prices may be delayed
+          .
         </span>
       )}
     </div>
@@ -778,45 +801,82 @@ if (loading || holdingsLoading) {
                 </div>
               </div>
 
-{/* Market Movers Section */}
+{/* Market Movers Section - Horizontally Scrollable */}
 <div className="bg-background border border-border rounded-xl p-4 mb-6">
   <div className="flex items-center justify-between mb-4">
     <h3 className="text-sm font-semibold text-foreground">Market Movers 🔥</h3>
     <span className="text-xs text-muted-foreground">Last 24 hours</span>
   </div>
-  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-    {displayGainers.map(({ sym, change }) => (
-      <div
-        key={sym}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px',
-          borderRadius: '12px',
-          background: 'var(--color-background-secondary)',
-          cursor: 'pointer',
-        }}
-        onClick={() => openModal({ type: 'crypto', sym })}
-      >
-<div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-  {sym === 'BTC' && <TokenBTC size={32} variant="branded" />}
-  {sym === 'ETH' && <TokenETH size={32} variant="branded" />}
-  {sym === 'USDT' && <TokenUSDT size={32} variant="branded" />}
-  {sym === 'BNB' && <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#F3BA2F', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600 }}>B</div>}
-  <div>
-    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>{sym}</div>
-    <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
-      {formatUSD(prices[sym] || 0)}
-    </div>
-  </div>
-</div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#10b981' }}>+{change.toFixed(1)}%</div>
-          <div style={{ fontSize: '10px', color: '#10b981' }}>▲</div>
+  <div style={{ 
+    display: 'flex', 
+    gap: '12px', 
+    overflowX: 'auto', 
+    paddingBottom: '6px',
+    scrollbarWidth: 'thin'
+  }}>
+    {displayGainers.map(({ sym, change }) => {
+      const price = prices[sym] || 0;
+      // Get real logo from @web3icons
+      let IconComponent = null;
+      try {
+        // Dynamically import the icon based on symbol
+        const iconMap: Record<string, any> = {
+          BTC: () => import('@web3icons/react').then(m => m.TokenBTC),
+          ETH: () => import('@web3icons/react').then(m => m.TokenETH),
+          SOL: () => import('@web3icons/react').then(m => m.TokenSOL),
+          BNB: () => import('@web3icons/react').then(m => m.TokenBNB),
+        };
+        // For now use CIcon as fallback, but we'll use the actual component
+      } catch (e) {
+        // Fallback to CIcon
+      }
+      
+      return (
+        <div
+          key={sym}
+          style={{
+            flex: '0 0 auto',
+            width: '160px',
+            padding: '12px',
+            borderRadius: '12px',
+            background: 'var(--color-background-secondary)',
+            cursor: 'pointer',
+          }}
+          onClick={() => openModal({ type: 'crypto', sym })}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {getCryptoIcon(sym, 28)}
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>{sym}</div>
+                <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+                  {formatUSD(price)}
+                </div>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#10b981' }}>+{change.toFixed(1)}%</div>
+              <div style={{ fontSize: '10px', color: '#10b981' }}>▲</div>
+            </div>
+          </div>
+          {/* Mini progress bar */}
+          <div style={{ 
+            height: '2px', 
+            background: 'rgba(16,185,129,0.2)', 
+            borderRadius: '2px',
+            marginTop: '8px',
+            overflow: 'hidden'
+          }}>
+            <div style={{ 
+              width: `${Math.min(change, 15)}%`, 
+              height: '100%', 
+              background: '#10b981',
+              borderRadius: '2px'
+            }} />
+          </div>
         </div>
-      </div>
-    ))}
+      );
+    })}
   </div>
 </div>
 
@@ -901,28 +961,30 @@ if (loading || holdingsLoading) {
       {/* Modals */}
       {modal?.type === 'crypto' && (
         <CryptoModal
-          sym={modal.sym}
-          holding={holdings[modal.sym] || 0}
-          price={prices[modal.sym] || 0}
-          onClose={closeModal}
-          onConvert={(sym) => {
-            closeModal();
-            setTimeout(() => openModal({ type: 'swap', sym }), 80);
-          }}
-          onWithdraw={(sym) => {
-            closeModal();
-            setTimeout(() => openModal({ type: 'withdraw', sym }), 80);
-          }}
-          onReceive={(sym) => {
-            closeModal();
-            setTimeout(() => openModal({ type: 'receive', sym }), 80);
-          }}
-        />
+  sym={modal.sym}
+  holding={holdings[modal.sym] || 0}
+  price={prices[modal.sym] || 0}
+  priceChange={priceChanges[modal.sym] || 0}
+  onClose={closeModal}
+  onConvert={(sym) => {
+    closeModal();
+    setTimeout(() => openModal({ type: 'swap', sym }), 80);
+  }}
+  onWithdraw={(sym) => {
+    closeModal();
+    setTimeout(() => openModal({ type: 'withdraw', sym }), 80);
+  }}
+  onReceive={(sym) => {
+    closeModal();
+    setTimeout(() => openModal({ type: 'receive', sym }), 80);
+  }}
+/>
       )}
 
       {modal?.type === 'all' && (
         <AllCryptosModal
           prices={prices}
+          priceChanges={priceChanges}
           onClose={closeModal}
           onSelect={(sym) => {
             closeModal();
