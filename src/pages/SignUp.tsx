@@ -45,7 +45,6 @@ export default function SignUp() {
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   
-  // Validate password match
   if (form.password !== form.confirmPassword) {
     setPasswordError("Passwords do not match");
     return;
@@ -54,7 +53,6 @@ const handleSubmit = async (e: React.FormEvent) => {
   setIsLoading(true);
 
   try {
-    // Sign up with Supabase
     const { data, error } = await supabase.auth.signUp({
       email: form.email.trim(),
       password: form.password,
@@ -64,15 +62,22 @@ const handleSubmit = async (e: React.FormEvent) => {
           last_name: form.lastName,
           full_name: `${form.firstName} ${form.lastName}`,
         },
+        emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
 
     if (error) throw error;
 
     if (data.user) {
-      toast.success("Account created successfully!");
-      // With email confirmation disabled, Supabase auto-signs in the user
-      navigate("/dashboard");
+      // Check if email confirmation is required
+      if (!data.user.confirmed_at) {
+        toast.success("Verification email sent! Please check your inbox to confirm your account.");
+        // Redirect to a "check your email" page or show a message
+        navigate("/verify-email", { state: { email: form.email } });
+      } else {
+        toast.success("Account created successfully!");
+        navigate("/dashboard");
+      }
     }
   } catch (error: any) {
     console.error("Sign up error:", error);

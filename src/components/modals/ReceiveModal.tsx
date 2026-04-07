@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CIcon } from '@/components/CIcon';
 import { Modal } from './Modal';
+import { getCryptoIcon } from '@/lib/cryptoIcons';
 
 interface ReceiveModalProps {
   sym: string;
@@ -21,7 +22,7 @@ export function ReceiveModal({ sym, onClose }: ReceiveModalProps) {
     <Modal title={`Receive ${sym}`} onClose={onClose}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-          <CIcon sym={sym} size={60} />
+          {getCryptoIcon(sym, 60)}
         </div>
 
         <div
