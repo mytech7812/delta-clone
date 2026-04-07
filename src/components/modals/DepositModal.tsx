@@ -4,6 +4,7 @@ import { CRYPTOS } from '@/lib/constants';
 import { formatUSD, formatCrypto, getCrypto } from '@/lib/utils';
 import { CIcon } from '@/components/CIcon';
 import { Modal } from './Modal';
+import { getCryptoIcon } from '@/lib/cryptoIcons';
 import { toast } from 'sonner';
 
 interface DepositModalProps {
@@ -63,7 +64,7 @@ export function DepositModal({ prices, onClose, onDepositSubmit, isSubmitting = 
                 setStep(2);
               }}
             >
-              <CIcon sym={c.sym} size={38} />
+             {getCryptoIcon(c.sym, 38)}
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
                   {c.name}
@@ -111,7 +112,7 @@ export function DepositModal({ prices, onClose, onDepositSubmit, isSubmitting = 
   return (
     <Modal title={`Deposit ${selectedSym}`} onClose={onClose} onBack={() => setStep(1)}>
       <div style={{ display: 'flex', justifyContent: 'center', margin: '12px 0 20px' }}>
-        <CIcon sym={selectedSym!} size={64} />
+        {getCryptoIcon(selectedSym!, 64)}
       </div>
 
       <div style={{ marginBottom: 16 }}>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CRYPTOS } from '@/lib/constants';
 import { formatUSD, formatCrypto, getCrypto } from '@/lib/utils';
 import { CIcon } from '@/components/CIcon';
+import { getCryptoIcon } from '@/lib/cryptoIcons';
 import { Modal } from './Modal';
 
 interface SwapModalProps {
@@ -44,7 +45,7 @@ export function SwapModal({ initFrom, initTo, prices, holdings, onClose }: SwapM
             padding: '12px 14px',
           }}
         >
-          <CIcon sym={from} size={34} />
+          {getCryptoIcon(from, 34)}
           <select
             className="sel"
             value={from}
@@ -115,7 +116,7 @@ export function SwapModal({ initFrom, initTo, prices, holdings, onClose }: SwapM
             padding: '12px 14px',
           }}
         >
-          <CIcon sym={to} size={34} />
+          {getCryptoIcon(to, 34)}
           <select
             className="sel"
             value={to}

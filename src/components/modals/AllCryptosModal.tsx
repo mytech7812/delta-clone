@@ -3,6 +3,8 @@ import { CRYPTOS } from '@/lib/constants';
 import { formatUSD, getCrypto } from '@/lib/utils';
 import { CIcon } from '@/components/CIcon';
 import { Modal } from './Modal';
+import { getCryptoIcon } from '@/lib/cryptoIcons';
+
 
 interface AllCryptosModalProps {
   prices: Record<string, number>;
@@ -48,7 +50,7 @@ export function AllCryptosModal({ prices, priceChanges, onClose, onSelect }: All
               className="list-row"
               onClick={() => onSelect(c.sym)}
             >
-              <CIcon sym={c.sym} size={38} />
+              {getCryptoIcon(c.sym, 38)}
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
                   {c.name}

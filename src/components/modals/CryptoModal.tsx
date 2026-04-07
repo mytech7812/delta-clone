@@ -1,5 +1,6 @@
 import { formatUSD, formatCrypto, getCrypto } from '@/lib/utils';
 import { CIcon } from '@/components/CIcon';
+import { getCryptoIcon } from '@/lib/cryptoIcons';
 import { Modal } from './Modal';
 
 interface CryptoModalProps {
@@ -30,7 +31,8 @@ export function CryptoModal({
   return (
     <Modal title={crypto.name} onClose={onClose}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 8, marginBottom: 20 }}>
-        <CIcon sym={sym} size={56} />
+        {getCryptoIcon(sym, 56)}
+
         <div>
           <div style={{ fontSize: 22, fontWeight: 500, color: 'var(--color-text-primary)' }}>
             {formatUSD(price)}

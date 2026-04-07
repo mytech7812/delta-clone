@@ -237,33 +237,46 @@ const refreshBalances = async () => {
   }
 };
 
-  // Check authentication
-  useEffect(() => {
-    let mounted = true;
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      if (!session) {
-        navigate('/');
-      } else {
-        setUserEmail(session.user.email || null);
-        setUser(session.user);
-      }
+// Check authentication with session persistence
+useEffect(() => {
+  let mounted = true;
+
+  const checkSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!mounted) return;
+    
+    if (!session) {
+      // No session, stay on login page
       setLoading(false);
-    });
+    } else {
+      setUserEmail(session.user.email || null);
+      setUser(session.user);
+      setLoading(false);
+    }
+  };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate('/');
-        setUser(null);
-        setUserEmail(null);
-      } else {
-        setUserEmail(session.user.email || null);
-        setUser(session.user);
-      }
-    });
+  checkSession();
 
-    return () => { mounted = false; try { subscription.unsubscribe(); } catch (e) { /* ignore */ } };
-  }, [navigate]);
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (!mounted) return;
+    
+    if (!session) {
+      // User manually signed out
+      navigate('/');
+      setUser(null);
+      setUserEmail(null);
+    } else {
+      setUserEmail(session.user.email || null);
+      setUser(session.user);
+    }
+  });
+
+  return () => {
+    mounted = false;
+    subscription.unsubscribe();
+  };
+}, [navigate]);
 
   // Load transactions for the signed-in user
   useEffect(() => {
@@ -471,7 +484,6 @@ if (loading || holdingsLoading) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        {/* AnexMint Logo Box */}
         <div className="w-16 h-16 rounded-xl bg-gradient-to-r from-primary via-blue-400 to-cyan-400 animate-pulse flex items-center justify-center shadow-lg">
           <span className="text-white font-bold text-2xl">A</span>
         </div>

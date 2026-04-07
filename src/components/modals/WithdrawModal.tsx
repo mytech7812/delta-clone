@@ -3,6 +3,7 @@ import { formatUSD, formatCrypto, getCrypto } from '@/lib/utils';
 import { CIcon } from '@/components/CIcon';
 import { Modal } from './Modal';
 import { toast } from 'sonner';
+import { getCryptoIcon } from '@/lib/cryptoIcons';
 
 interface WithdrawModalProps {
   initSym: string | null;
@@ -81,7 +82,7 @@ export function WithdrawModal({ initSym, prices, holdings, onClose, onConvert }:
                   setStep(2);
                 }}
               >
-                <CIcon sym={c.sym} size={38} />
+                {getCryptoIcon(c.sym, 38)}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
                     {c.name}
