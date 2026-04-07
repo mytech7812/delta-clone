@@ -515,6 +515,12 @@
   }
 }
 
+@media (max-width: 700px) {
+  .market-movers-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
 @media (min-width: 701px) {
   .mobile-only {
     display: none !important;
@@ -653,5 +659,14 @@
   
   .sidebar {
     display: flex !important;
+  }
+}
+/* Force 4 columns for market movers on desktop */
+@media (min-width: 768px) {
+  .market-movers-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 16px !important;
+    width: 100% !important;
   }
 }

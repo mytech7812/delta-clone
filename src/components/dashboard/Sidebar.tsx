@@ -3,9 +3,10 @@ import { NAV_ITEMS } from '@/lib/constants';
 interface SidebarProps {
   activeNav: string;
   onNavChange: (id: string) => void;
+  user: any; // Add this line
 }
 
-export function Sidebar({ activeNav, onNavChange }: SidebarProps) {
+export function Sidebar({ activeNav, onNavChange, user }: SidebarProps) {  // Add user parameter
   return (
     <div className="sidebar">
       <div style={{ padding: '8px 16px 16px', borderBottom: '0.5px solid var(--color-border-tertiary)', marginBottom: 8 }}>
@@ -40,20 +41,35 @@ export function Sidebar({ activeNav, onNavChange }: SidebarProps) {
               width: 32,
               height: 32,
               borderRadius: '50%',
-              background: 'var(--color-background-info)',
+              background: 'linear-gradient(135deg, var(--brand), var(--color-text-info))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 12,
               fontWeight: 500,
-              color: 'var(--color-text-info)'
+              color: '#fff'
             }}
           >
-            JD
+            {user?.user_metadata?.full_name ? (
+              (() => {
+                const name = user.user_metadata.full_name;
+                const parts = name.split(' ');
+                if (parts.length >= 2) {
+                  return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+                }
+                return name.slice(0, 2).toUpperCase();
+              })()
+            ) : (
+              user?.email?.charAt(0).toUpperCase() || 'U'
+            )}
           </div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)' }}>John Doe</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>john@example.com</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+              {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
+              {user?.email || 'user@example.com'}
+            </div>
           </div>
         </div>
       </div>

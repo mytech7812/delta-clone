@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { CRYPTOS } from '@/lib/constants';
 import { formatUSD, formatCrypto, getCrypto } from '@/lib/utils';
-import { getAdminWallet } from '@/lib/adminWallets';
 import { CIcon } from '@/components/CIcon';
 import { Modal } from './Modal';
 import { toast } from 'sonner';
@@ -24,8 +24,31 @@ export function DepositModal({ prices, onClose, onDepositSubmit, isSubmitting = 
   const [usdAmount, setUsdAmount] = useState('');
   const [copied, setCopied] = useState(false);
   const [localSubmitting, setLocalSubmitting] = useState(false);
+  const [adminWallet, setAdminWallet] = useState('');
 
   const quickAmounts = [100, 500, 1000, 5000];
+
+  // Fetch wallet address from Supabase when crypto is selected
+  useEffect(() => {
+    const fetchWalletAddress = async () => {
+      if (!selectedSym) return;
+      
+      const { data, error } = await supabase
+        .from('admin_wallets')
+        .select('wallet_address')
+        .eq('crypto_symbol', selectedSym)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching wallet:', error);
+        setAdminWallet('Wallet not configured');
+      } else {
+        setAdminWallet(data?.wallet_address || 'Wallet not configured');
+      }
+    };
+    
+    fetchWalletAddress();
+  }, [selectedSym]);
 
   if (step === 1) {
     return (
@@ -59,7 +82,6 @@ export function DepositModal({ prices, onClose, onDepositSubmit, isSubmitting = 
 
   const price = prices[selectedSym!] || 0;
   const cryptoAmount = usdAmount ? (parseFloat(usdAmount) || 0) / price : 0;
-  const adminWallet = getAdminWallet(selectedSym!);
 
   const copyAddress = () => {
     navigator.clipboard.writeText(adminWallet);

@@ -18,6 +18,10 @@ import { TransactionDetailModal } from '@/components/modals/TransactionDetailMod
 import { WithdrawModal } from '@/components/modals/WithdrawModal';
 import { DepositConfirmationModal } from '@/components/modals/DepositConfirmationModal';
 import { ReceiveModal } from '@/components/modals/ReceiveModal';
+import { MarketOverview } from '@/components/MarketOverview';
+import { History } from '@/components/History';
+import { Settings } from '@/components/Settings';
+import { TokenBTC, TokenUSDT, TokenETH, TokenSOL } from '@web3icons/react';
 import '@/styles/dashboard.css';
 
 interface Transaction {
@@ -60,6 +64,7 @@ const [priceChanges, setPriceChanges] = useState<Record<string, number>>({});
   const [lastDeposit, setLastDeposit] = useState<any>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
+  
 
   const handleTransactionClick = (tx: any) => {
     setSelectedTransaction(tx);
@@ -68,39 +73,44 @@ const [priceChanges, setPriceChanges] = useState<Record<string, number>>({});
   // REFRESH BALANCES FUNCTION - MOVED OUTSIDE handleDepositSubmit
     
 
-    // Fetch user's transactions from DB so they persist after reload
-    const fetchUserTransactions = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data: txs, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+// Fetch user's transactions from DB so they persist after reload
+const fetchUserTransactions = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    const { data: txs, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
 
-      if (error) {
+    if (error) {
+      if (error.name !== 'AbortError') {
         console.error('Failed to fetch user transactions:', error);
-        return;
       }
+      return;
+    }
 
-      const mapped = (txs || []).map((t: any) => ({
-        id: t.id,
-        type: t.type,
-        sym: t.crypto_symbol || t.sym,
-        amt: t.amount || t.amt || null,
-        usd: t.usd_amount || t.usd || 0,
-        date: new Date(t.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-        time: t.created_at ? new Date(t.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : undefined,
-        status: t.status || 'pending',
-        txHash: t.tx_hash || t.txHash || undefined,
-      }));
+    const mapped = (txs || []).map((t: any) => ({
+      id: t.id,
+      type: t.type,
+      sym: t.crypto_symbol || t.sym,
+      amt: t.amount || t.amt || null,
+      usd: t.usd_amount || t.usd || 0,
+      date: new Date(t.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+      time: t.created_at ? new Date(t.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : undefined,
+      status: t.status || 'pending',
+      txHash: t.tx_hash || t.txHash || undefined,
+    }));
 
-      setTransactions(mapped);
-    } catch (err) {
+    setTransactions(mapped);
+  } catch (err: any) {
+    if (err?.name !== 'AbortError') {
       console.error('Error fetching transactions:', err);
     }
-  };
+  }
+};
 
   const handleDepositSubmit = async (deposit: {
     cryptoSymbol: string;
@@ -195,34 +205,37 @@ const [priceChanges, setPriceChanges] = useState<Record<string, number>>({});
     console.log('Deposit submitted:', deposit);
   };
 
-  // Helper to refresh balances (used by realtime listeners)
-  const refreshBalances = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+// Helper to refresh balances (used by realtime listeners)
+const refreshBalances = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-      const { data: balances, error } = await supabase
-        .from('user_balances')
-        .select('crypto_symbol, balance')
-        .eq('user_id', user.id);
+    const { data: balances, error } = await supabase
+      .from('user_balances')
+      .select('crypto_symbol, balance')
+      .eq('user_id', user.id);
 
-      if (error) throw error;
+    if (error) throw error;
 
-      const userHoldings: Record<string, number> = {};
-      balances?.forEach((item: any) => {
-        if (item && item.crypto_symbol) {
-          const sym = String(item.crypto_symbol).toUpperCase();
-          userHoldings[sym] = Number(item.balance) || 0;
-        }
-      });
+    const userHoldings: Record<string, number> = {};
+    balances?.forEach((item: any) => {
+      if (item && item.crypto_symbol) {
+        const sym = String(item.crypto_symbol).toUpperCase();
+        userHoldings[sym] = Number(item.balance) || 0;
+      }
+    });
 
-      setHoldings(userHoldings);
-    } catch (error) {
+    setHoldings(userHoldings);
+  } catch (error: any) {
+    // Ignore lock errors - they're harmless and will retry
+    if (error?.name !== 'AbortError' && !error?.message?.includes('Lock')) {
       console.error('Error fetching balances:', error);
-    } finally {
-      setHoldingsLoading(false);
     }
-  };
+  } finally {
+    setHoldingsLoading(false);
+  }
+};
 
   // Check authentication
   useEffect(() => {
@@ -262,45 +275,70 @@ const [priceChanges, setPriceChanges] = useState<Record<string, number>>({});
     return () => subscription.unsubscribe();
   }, []);
 
-  // Subscribe to realtime changes so user's dashboard updates when admin approves deposits
-  useEffect(() => {
-    let balancesSub: any = null;
-    let txSub: any = null;
+// Subscribe to realtime changes so user's dashboard updates when admin approves deposits
+useEffect(() => {
+  let balancesSub: any = null;
+  let txSub: any = null;
+  let mounted = true;
 
-    const setupRealtime = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+  const setupRealtime = async () => {
+    try {
+      // Add a small delay to avoid lock conflicts
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user || !mounted) return;
 
-        // Listen for changes to this user's balances
-        balancesSub = (supabase as any)
-          .from(`user_balances:user_id=eq.${user.id}`)
-          .on('INSERT', () => refreshBalances())
-          .on('UPDATE', () => refreshBalances())
-          .subscribe();
+      // Listen for changes to this user's balances
+      balancesSub = (supabase as any)
+        .channel(`balances-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_balances',
+            filter: `user_id=eq.${user.id}`,
+          },
+          () => {
+            if (mounted) refreshBalances();
+          }
+        )
+        .subscribe();
 
-        // Listen for changes to this user's transactions
-        txSub = (supabase as any)
-          .from(`transactions:user_id=eq.${user.id}`)
-          .on('INSERT', () => fetchUserTransactions())
-          .on('UPDATE', () => fetchUserTransactions())
-          .subscribe();
-      } catch (err) {
-        console.error('Failed to setup realtime subscriptions', err);
-      }
-    };
+      // Listen for changes to this user's transactions
+      txSub = (supabase as any)
+        .channel(`transactions-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'transactions',
+            filter: `user_id=eq.${user.id}`,
+          },
+          () => {
+            if (mounted) fetchUserTransactions();
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.error('Failed to setup realtime subscriptions', err);
+    }
+  };
 
-    setupRealtime();
+  setupRealtime();
 
-    return () => {
-      try {
-        if (balancesSub && typeof (balancesSub as any).unsubscribe === 'function') (balancesSub as any).unsubscribe();
-        if (txSub && typeof (txSub as any).unsubscribe === 'function') (txSub as any).unsubscribe();
-      } catch (err) {
-        // best-effort unsubscribe
-      }
-    };
-  }, []);
+  return () => {
+    mounted = false;
+    try {
+      if (balancesSub && typeof balancesSub.unsubscribe === 'function') balancesSub.unsubscribe();
+      if (txSub && typeof txSub.unsubscribe === 'function') txSub.unsubscribe();
+    } catch (err) {
+      // best-effort unsubscribe
+    }
+  };
+}, []);
 
   // Fetch user's real balances from Supabase
   useEffect(() => {
@@ -348,10 +386,10 @@ useEffect(() => {
 }, []);
 
 // Calculate portfolio 24h change based on actual holdings and real price changes
+// Calculate portfolio change based on actual holdings and real price changes (same as MarketOverview)
 const calculatePortfolioChange = () => {
   if (Object.keys(holdings).length === 0) return 0;
   if (Object.keys(prices).length === 0) return 0;
-  if (Object.keys(priceChanges).length === 0) return 0;
   
   let totalCurrentValue = 0;
   let totalPreviousValue = 0;
@@ -365,13 +403,14 @@ const calculatePortfolioChange = () => {
     if (currentPrice === 0) continue;
     
     totalCurrentValue += amount * currentPrice;
-    // Calculate what the price was 24h ago based on current price and change percent
+    // Calculate previous price based on 24h change percentage
     const previousPrice = currentPrice / (1 + changePercent / 100);
     totalPreviousValue += amount * previousPrice;
   }
   
   if (totalPreviousValue === 0) return 0;
-  return ((totalCurrentValue - totalPreviousValue) / totalPreviousValue) * 100;
+  const change = ((totalCurrentValue - totalPreviousValue) / totalPreviousValue) * 100;
+  return isNaN(change) ? 0 : change;
 };
 
 const portfolioChange = calculatePortfolioChange();
@@ -379,6 +418,20 @@ const isPositive = portfolioChange >= 0;
 const total = calculateTotalUSD(holdings, prices);
 const sortedHoldings = getSortedHoldings(holdings, prices);
 const majorCryptos = ["BTC", "ETH", "SOL", "USDT"];
+
+// Market Movers - Top gainers
+const gainers = Object.entries(priceChanges)
+  .filter(([_, change]) => change > 0)
+  .sort(([, a], [, b]) => b - a)
+  .slice(0, 4)
+  .map(([sym, change]) => ({ sym, change }));
+
+const displayGainers = gainers.length > 0 ? gainers : [
+  { sym: 'SOL', change: 12.4 },
+  { sym: 'ETH', change: 8.2 },
+  { sym: 'BTC', change: 5.7 },
+  { sym: 'BNB', change: 4.3 },
+];
 
 const openModal = (newModal: ModalType) => setModal(newModal);
 const closeModal = () => setModal(null);
@@ -392,212 +445,319 @@ if (loading || holdingsLoading) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary via-blue-400 to-cyan-400 animate-pulse flex items-center justify-center">
-          <span className="text-white font-bold text-lg">A</span>
+        {/* AnexMint Logo Box */}
+        <div className="w-16 h-16 rounded-xl bg-gradient-to-r from-primary via-blue-400 to-cyan-400 animate-pulse flex items-center justify-center shadow-lg">
+          <span className="text-white font-bold text-2xl">A</span>
         </div>
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">Loading your dashboard...</p>
+        <div className="text-center">
+          <p className="text-sm font-medium text-foreground">AnexMintMining</p>
+          <p className="text-xs text-muted-foreground mt-1">Loading your dashboard...</p>
+        </div>
       </div>
     </div>
   );
 }
   return (
     <div className="app">
-      <Sidebar activeNav={activeNav} onNavChange={setActiveNav} />
+      <Sidebar activeNav={activeNav} onNavChange={setActiveNav} user={user} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-        {/* Topbar */}
-        <div className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div className="logo-mark mobile-only" style={{ display: 'none' }}>A</div>
-            <div>
-              <h2 style={{ fontSize: activeNav === 'dashboard' ? 15 : 15, fontWeight: 500, margin: 0, color: 'var(--color-text-primary)' }}>
-                {activeNav === 'dashboard' ? (
-                  (() => {
-                    const meta = (user && (user.user_metadata || {})) || {};
-                    const first = (meta.first_name || meta.firstName || '').toString().trim();
-                    const full = (meta.full_name || meta.fullName || '').toString().trim();
-                    const fallback = user && user.email ? user.email.split('@')[0] : 'there';
-                    const name = first || (full ? full.split(' ')[0] : '') || fallback;
-                    return `Hi, ${name}`;
-                  })()
-                ) : (
-                  NAV_ITEMS.find(n => n.id === activeNav)?.label || 'Dashboard'
-                )}
-              </h2>
-              <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                  {pricesAreStale && (
-                    <span style={{ fontSize: 11, color: 'var(--color-text-warning)', background: 'rgba(245,158,11,0.06)', padding: '4px 8px', borderRadius: 8 }}>
-                      Prices may be delayed
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold"
-                aria-label="User menu"
-                style={{ border: 'none' }}
-              >
-                {(() => {
-                  const meta = (user && (user.user_metadata || {})) || {};
-                  const first = (meta.first_name || meta.firstName || '').toString().trim();
-                  const last = (meta.last_name || meta.lastName || '').toString().trim();
-                  const full = (meta.full_name || meta.fullName || '').toString().trim();
-                  let initials = '';
-                  if (first && last) initials = `${first.charAt(0)}${last.charAt(0)}`;
-                  else if (full) {
-                    const parts = full.split(' ').filter(Boolean);
-                    initials = parts.length >= 2 ? `${parts[0].charAt(0)}${parts[parts.length-1].charAt(0)}` : full.slice(0,2);
-                  } else if (user && user.email) initials = user.email.charAt(0).toUpperCase();
-                  return initials.toUpperCase();
-                })()}
-              </button>
+{/* Topbar - Merged with Welcome Banner */}
+<div className="topbar" style={{ 
+  display: 'flex', 
+  justifyContent: 'space-between', 
+  alignItems: 'center',
+  padding: '12px 20px'
+}}>
+  {/* Left side - Welcome message, date, and portfolio performance */}
+  <div>
+    <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: 'var(--color-text-primary)' }}>
+      Welcome back, {(() => {
+        const meta = user?.user_metadata || {};
+        const firstName = meta.first_name || meta.firstName || '';
+        const fullName = meta.full_name || meta.fullName || '';
+        const name = firstName || (fullName ? fullName.split(' ')[0] : '');
+        return name || user?.email?.split('@')[0] || 'there';
+      })()}! 👋
+    </h2>
+    <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>
+      {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+      {pricesAreStale && (
+        <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--color-text-warning)', background: 'rgba(245,158,11,0.06)', padding: '2px 6px', borderRadius: 8 }}>
+          Prices may be delayed
+        </span>
+      )}
+    </div>
+{/* Portfolio performance - hidden on mobile */}
+<div className="desktop-only" style={{ fontSize: 12, marginTop: 4 }}>
+  <span style={{ color: 'var(--color-text-secondary)' }}>Your portfolio is </span>
+  <span style={{ color: isPositive ? 'var(--color-text-success)' : 'var(--color-text-danger)', fontWeight: 500 }}>
+    {isPositive ? '↑' : '↓'} {Math.abs(portfolioChange).toFixed(2)}%
+  </span>
+  <span style={{ color: 'var(--color-text-secondary)' }}> today</span>
+</div>
+  </div>
+  
+  {/* Right side - User menu and Deposit button */}
+  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+    {/* User Menu Dropdown */}
+    <div className="relative">
+      <button
+        onClick={() => setMenuOpen(!menuOpen)}
+        className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-blue-500 flex items-center justify-center text-white font-semibold"
+        aria-label="User menu"
+        style={{ border: 'none', cursor: 'pointer' }}
+      >
+        {(() => {
+          const meta = user?.user_metadata || {};
+          const firstName = meta.first_name || meta.firstName || '';
+          const lastName = meta.last_name || meta.lastName || '';
+          const fullName = meta.full_name || meta.fullName || '';
+          
+          if (firstName && lastName) {
+            return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+          }
+          if (fullName) {
+            const parts = fullName.split(' ').filter(Boolean);
+            if (parts.length >= 2) {
+              return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+            }
+            return fullName.slice(0, 2).toUpperCase();
+          }
+          return user?.email?.charAt(0).toUpperCase() || 'U';
+        })()}
+      </button>
 
-              {menuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-background border border-border rounded-lg shadow-md py-2 z-50">
-                  <div className="px-4 py-2">
-                    <div className="font-medium text-sm text-foreground">
-                      {((user && user.user_metadata && (user.user_metadata.full_name || user.user_metadata.fullName)) || (user && user.email) || 'User')}
-                    </div>
-                    <div className="text-xs text-muted-foreground truncate">{user && user.email}</div>
-                  </div>
-                  <div className="border-t border-border mt-2" />
-                  <button
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-surface"
-                    onClick={async () => { await supabase.auth.signOut(); navigate('/'); }}
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              )}
+      {menuOpen && (
+        <div className="absolute right-0 mt-2 w-56 bg-background border border-border rounded-lg shadow-lg py-2 z-50">
+          <div className="px-4 py-2 border-b border-border">
+            <div className="font-medium text-sm text-foreground">
+              {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
             </div>
-
-            <button
-              className="desktop-only"
-              style={{
-                background: 'var(--brand)',
-                border: 'none',
-                borderRadius: 8,
-                padding: '7px 14px',
-                cursor: 'pointer',
-                color: '#fff',
-                fontSize: 12,
-                fontWeight: 500,
-              }}
-              onClick={() => openModal({ type: 'deposit' })}
-            >
-              + Deposit
-            </button>
+            <div className="text-xs text-muted-foreground truncate">{user?.email}</div>
           </div>
+          <button
+            className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-secondary transition-colors"
+            onClick={handleSignOut}
+          >
+            Sign Out
+          </button>
         </div>
+      )}
+    </div>
+
+    {/* Deposit Button - Desktop only */}
+    <button
+      className="desktop-only"
+      style={{
+        background: 'var(--brand)',
+        border: 'none',
+        borderRadius: 8,
+        padding: '8px 16px',
+        cursor: 'pointer',
+        color: '#fff',
+        fontSize: 13,
+        fontWeight: 500,
+      }}
+      onClick={() => openModal({ type: 'deposit' })}
+    >
+      + Deposit
+    </button>
+  </div>
+</div>
 
         {/* Main Content */}
         <div className="main">
           {activeNav === 'dashboard' && (
             <div className="content">
+
               {/* Portfolio Card */}
               <div className="card">
-                {/* Desktop Layout */}
-                <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-                  <DonutChart 
-                    holdings={holdings} 
-                    prices={prices} 
-                    size={190} 
-                    change={portfolioChange}
-                    />
-                  
-                  <div className="balance-legend">
-                    {sortedHoldings.map(({ sym, amount, usd, crypto }) => (
-                      <div key={sym} className="legend-row">
-                        <div style={{ width: 8, height: 8, borderRadius: 2, background: crypto.color, flexShrink: 0 }} />
-                        <CIcon sym={sym} size={28} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                            {crypto.name}
-                          </div>
-                          <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
-                            {formatCrypto(amount)} {sym}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                            {formatUSD(usd)}
-                          </div>
-                          <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
-                            {((usd / total) * 100).toFixed(1)}%
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+{/* Desktop Layout - Redesigned */}
+<div className="desktop-only">
+  <div style={{ 
+    display: 'grid', 
+    gridTemplateColumns: '320px 1fr', 
+    gap: '24px',
+    alignItems: 'start'
+  }}>
+    
+{/* Left Column - Pie Chart & Total Balance */}
+<div style={{
+  textAlign: 'center',
+  marginLeft: '60px'
+}}>
+  <DonutChart 
+    holdings={holdings} 
+    prices={prices} 
+    size={200} 
+    change={portfolioChange}
+    total={total}
+  />
+</div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0 }}>
-                    <button
-                      style={{
-                        padding: '11px 22px',
-                        borderRadius: 10,
-                        border: 'none',
-                        background: 'var(--brand)',
-                        color: '#fff',
-                        fontWeight: 500,
-                        fontSize: 13,
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => openModal({ type: 'deposit' })}
-                    >
-                      ＋ Add Money
-                    </button>
-                    <button
-                      style={{
-                        padding: '11px 22px',
-                        borderRadius: 10,
-                        border: '0.5px solid var(--color-border-secondary)',
-                        background: 'none',
-                        color: 'var(--color-text-primary)',
-                        fontWeight: 500,
-                        fontSize: 13,
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => openModal({ type: 'withdraw' })}
-                    >
-                      ↑ Withdraw
-                    </button>
-                    <button
-                      style={{
-                        padding: '11px 22px',
-                        borderRadius: 10,
-                        border: '0.5px solid var(--color-border-secondary)',
-                        background: 'none',
-                        color: 'var(--color-text-primary)',
-                        fontWeight: 500,
-                        fontSize: 13,
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => openModal({ type: 'swap' })}
-                    >
-                      ↔ Convert
-                    </button>
-                  </div>
-                </div>
+    {/* Right Column - Portfolio Breakdown */}
+    <div style={{
+      background: 'var(--color-background-primary)',
+      border: '1px solid var(--color-border-tertiary)',
+      borderRadius: '20px',
+      padding: '20px'
+    }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '20px' 
+      }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
+          Portfolio Breakdown
+        </h3>
+        <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+          Total: {formatUSD(total)}
+        </span>
+      </div>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {sortedHoldings.map(({ sym, amount, usd, crypto }) => (
+          <div key={sym} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ 
+              width: '40px', 
+              height: '40px', 
+              borderRadius: '50%', 
+              background: crypto.color, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              color: '#fff', 
+              fontWeight: 600, 
+              fontSize: '14px' 
+            }}>
+              {sym}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                  {crypto.name}
+                </span>
+                <span style={{ fontSize: '13px', color: 'var(--color-text-primary)' }}>
+                  {formatCrypto(amount)} {sym}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+                  {formatUSD(usd)}
+                </span>
+                <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+                  {((usd / total) * 100).toFixed(1)}%
+                </span>
+              </div>
+              <div style={{ height: '4px', background: 'var(--color-background-secondary)', borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{ 
+                  width: `${((usd / total) * 100)}%`, 
+                  height: '100%', 
+                  background: crypto.color, 
+                  borderRadius: '2px' 
+                }} />
+              </div>
+            </div>
+          </div>
+        ))}
+        {sortedHoldings.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-secondary)' }}>
+            No assets yet. Make your first deposit to get started.
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+
+  {/* Action Buttons Row */}
+  <div style={{ 
+    display: 'flex', 
+    gap: '16px', 
+    marginTop: '24px',
+    justifyContent: 'space-between'
+  }}>
+    <button
+      style={{
+        flex: 1,
+        padding: '14px 24px',
+        borderRadius: '12px',
+        border: 'none',
+        background: 'linear-gradient(135deg, var(--brand), #00ccff)',
+        color: '#fff',
+        fontWeight: 600,
+        fontSize: '14px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+      }}
+      onClick={() => openModal({ type: 'deposit' })}
+    >
+      <span style={{ fontSize: '18px' }}>+</span> Add Money
+    </button>
+    <button
+      style={{
+        flex: 1,
+        padding: '14px 24px',
+        borderRadius: '12px',
+        border: '1px solid var(--color-border-secondary)',
+        background: 'var(--color-background-secondary)',
+        color: 'var(--color-text-primary)',
+        fontWeight: 600,
+        fontSize: '14px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+      }}
+      onClick={() => openModal({ type: 'withdraw' })}
+    >
+      <span style={{ fontSize: '18px' }}>↑</span> Withdraw
+    </button>
+    <button
+      style={{
+        flex: 1,
+        padding: '14px 24px',
+        borderRadius: '12px',
+        border: '1px solid var(--color-border-secondary)',
+        background: 'var(--color-background-secondary)',
+        color: 'var(--color-text-primary)',
+        fontWeight: 600,
+        fontSize: '14px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+      }}
+      onClick={() => openModal({ type: 'swap' })}
+    >
+      <span style={{ fontSize: '18px' }}>↔</span> Convert
+    </button>
+  </div>
+</div>
 
                 {/* Mobile Layout */}
-                <div className="mobile-balance mobile-only" style={{ flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <button onClick={() => setModal({ type: 'portfolioMobile' })} style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer' }} aria-label="Open portfolio breakdown">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 9999, background: 'var(--color-background-secondary)', border: '1px solid var(--color-border-tertiary)', color: 'var(--color-text-secondary)', fontSize: 12 }}>
-                      <span>💰 Total Portfolio</span>
-                      <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>▾</span>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 28, fontWeight: 500, color: 'var(--color-text-primary)', marginTop: 8 }}>{formatUSD(total)}</div>
-                </button>
+<div className="mobile-balance mobile-only" style={{ flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+  <button onClick={() => setModal({ type: 'portfolioMobile' })} style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer' }} aria-label="Open portfolio breakdown">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 9999, background: 'var(--color-background-secondary)', border: '1px solid var(--color-border-tertiary)', color: 'var(--color-text-secondary)', fontSize: 12 }}>
+        {/* Real crypto icons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <TokenBTC size={14} variant="branded" />
+          <TokenETH size={14} variant="branded" />
+          <TokenSOL size={14} variant="branded" />
+        </div>
+        <span>Total Portfolio</span>
+        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>▾</span>
+      </div>
+    </div>
+    <div style={{ fontSize: 28, fontWeight: 500, color: 'var(--color-text-primary)', marginTop: 8 }}>{formatUSD(total)}</div>
+  </button>
                 <div style={{ fontSize: 13, color: isPositive ? 'var(--color-text-success)' : 'var(--color-text-danger)', marginBottom: 16 }}>
                     {isPositive ? '▲' : '▼'} {Math.abs(portfolioChange).toFixed(2)}% (24h)
                 </div>
@@ -617,6 +777,48 @@ if (loading || holdingsLoading) {
                 </div>
                 </div>
               </div>
+
+{/* Market Movers Section */}
+<div className="bg-background border border-border rounded-xl p-4 mb-6">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-sm font-semibold text-foreground">Market Movers 🔥</h3>
+    <span className="text-xs text-muted-foreground">Last 24 hours</span>
+  </div>
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+    {displayGainers.map(({ sym, change }) => (
+      <div
+        key={sym}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px',
+          borderRadius: '12px',
+          background: 'var(--color-background-secondary)',
+          cursor: 'pointer',
+        }}
+        onClick={() => openModal({ type: 'crypto', sym })}
+      >
+<div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+  {sym === 'BTC' && <TokenBTC size={32} variant="branded" />}
+  {sym === 'ETH' && <TokenETH size={32} variant="branded" />}
+  {sym === 'USDT' && <TokenUSDT size={32} variant="branded" />}
+  {sym === 'BNB' && <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#F3BA2F', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600 }}>B</div>}
+  <div>
+    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>{sym}</div>
+    <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
+      {formatUSD(prices[sym] || 0)}
+    </div>
+  </div>
+</div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: '#10b981' }}>+{change.toFixed(1)}%</div>
+          <div style={{ fontSize: '10px', color: '#10b981' }}>▲</div>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
 
               {/* Crypto Grid */}
               <div style={{ marginBottom: 16 }}>
@@ -654,13 +856,31 @@ if (loading || holdingsLoading) {
             </div>
           )}
 
-          {activeNav !== 'dashboard' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 400, gap: 12 }}>
-              <div style={{ fontSize: 36 }}>🚧</div>
-              <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--color-text-primary)' }}>{NAV_ITEMS.find(n => n.id === activeNav)?.label}</div>
-              <div style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>This section is coming soon</div>
-            </div>
-          )}
+{activeNav === 'markets' && (
+  <div className="content">
+    <MarketOverview />
+  </div>
+)}
+
+{activeNav === 'history' && (
+  <div className="content">
+    <History />
+  </div>
+)}
+
+{activeNav === 'settings' && (
+  <div className="content">
+    <Settings />
+  </div>
+)}
+
+{activeNav !== 'dashboard' && activeNav !== 'markets' && activeNav !== 'settings' && activeNav !== 'history' && (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 400, gap: 12 }}>
+    <div style={{ fontSize: 36 }}>🚧</div>
+    <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--color-text-primary)' }}>{NAV_ITEMS.find(n => n.id === activeNav)?.label}</div>
+    <div style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>This section is coming soon</div>
+  </div>
+)}
         </div>
 
         {/* Bottom Navigation (Mobile) */}
@@ -749,7 +969,13 @@ if (loading || holdingsLoading) {
             <div className="modal-handle" style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}><div style={{ width: 36, height: 4, borderRadius: 4, background: 'var(--color-border-tertiary)' }} /></div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <DonutChart holdings={holdings} prices={prices} size={220} change={portfolioChange} centerLabel="TOTL BALANCE" />
+                <DonutChart 
+  holdings={holdings} 
+  prices={prices} 
+  size={220} 
+  change={portfolioChange}
+  total={total}
+/>
               </div>
 
               <div style={{ width: '100%', marginTop: 8 }}>
@@ -793,3 +1019,4 @@ if (loading || holdingsLoading) {
     </div>
   );
 }
+

@@ -5,15 +5,15 @@ interface DonutChartProps {
   prices: Record<string, number>;
   size?: number;
   change?: number;
-  centerLabel?: string;
+  total?: number;
 }
 
-export function DonutChart({ holdings, prices, size = 190, change = 0, centerLabel }: DonutChartProps) {
-  const total = getSortedHoldings(holdings, prices).reduce((sum, item) => sum + item.usd, 0);
+export function DonutChart({ holdings, prices, size = 200, change = 0, total: propTotal }: DonutChartProps) {
   const items = getSortedHoldings(holdings, prices);
+  const total = propTotal !== undefined ? propTotal : items.reduce((sum, item) => sum + item.usd, 0);
   const isPositive = change >= 0;
   
-  const T = 30;
+  const T = 12; // Thinner ring (was 30)
   const r = (size - T) / 2;
   const C = 2 * Math.PI * r;
   const cx = size / 2;
@@ -22,7 +22,7 @@ export function DonutChart({ holdings, prices, size = 190, change = 0, centerLab
   let cumA = 0;
   const segs = items.map(item => {
     const pct = item.usd / total;
-    const dash = Math.max(3, pct * C - 4);
+    const dash = Math.max(2, pct * C - 2);
     const rot = cumA - 90;
     cumA += pct * 360;
     return { ...item, dash, rot, color: item.crypto.color };
@@ -31,14 +31,16 @@ export function DonutChart({ holdings, prices, size = 190, change = 0, centerLab
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size}>
+        {/* Background ring */}
         <circle
           cx={cx}
           cy={cy}
           r={r}
           fill="none"
-          stroke="rgba(128,128,128,0.08)"
+          stroke="var(--color-background-secondary)"
           strokeWidth={T}
         />
+        {/* Segments */}
         {segs.map((s, i) => (
           <circle
             key={i}
@@ -47,8 +49,9 @@ export function DonutChart({ holdings, prices, size = 190, change = 0, centerLab
             r={r}
             fill="none"
             stroke={s.color}
-            strokeWidth={T - 8}
+            strokeWidth={T}
             strokeDasharray={`${s.dash} ${C - s.dash}`}
+            strokeDashoffset="0"
             transform={`rotate(${s.rot} ${cx} ${cy})`}
           />
         ))}
@@ -61,15 +64,15 @@ export function DonutChart({ holdings, prices, size = 190, change = 0, centerLab
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 3,
+          gap: '4px',
           pointerEvents: 'none'
         }}
       >
-        <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{centerLabel || 'Portfolio'}</div>
-        <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+        <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>Total balance</div>
+        <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
           {formatUSD(total)}
         </div>
-        <div style={{ fontSize: 11, color: isPositive ? 'var(--color-text-success)' : 'var(--color-text-danger)' }}>
+        <div style={{ fontSize: '11px', color: isPositive ? 'var(--color-text-success)' : 'var(--color-text-danger)' }}>
           {isPositive ? '▲' : '▼'} {Math.abs(change).toFixed(2)}% (24h)
         </div>
       </div>
