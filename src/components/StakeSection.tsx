@@ -1,62 +1,45 @@
-import { TrendingUp, Lock, Coins } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Crypto3D from "./ui/crypto-3d";
+import { getCryptoIcon } from '@/lib/cryptoIcons';
 
-const stakingOptions = [
-  { asset: "SOL", name: "Solana", apy: "7.2%", color: "hsl(260, 80%, 60%)" },
-  { asset: "ETH", name: "Ethereum", apy: "4.8%", color: "hsl(220, 60%, 55%)" },
-  { asset: "ATOM", name: "Cosmos", apy: "12.5%", color: "hsl(200, 70%, 50%)" },
-  { asset: "DOT", name: "Polkadot", apy: "11.3%", color: "hsl(330, 70%, 55%)" },
+const stakeOptions = [
+  { sym: 'SOL', name: 'Solana', apy: 7.2 },
+  { sym: 'ETH', name: 'Ethereum', apy: 4.8 },
+  { sym: 'ATOM', name: 'Cosmos', apy: 12.5 },
+  { sym: 'DOT', name: 'Polkadot', apy: 11.3 },
 ];
 
-const StakeSection = () => {
+export default function StakeSection() {
   return (
-    <section id="staking" className="py-16 md:py-24 bg-secondary">
+    <section className="py-16 bg-background">
       <div className="container">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-4">
-            <Coins className="w-4 h-4" />
-            Stake & Earn
-          </div>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Earn Passive Income
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Stake your crypto and earn rewards. No lockup minimums, withdraw anytime. Your assets work for you 24/7.
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Stake your crypto and earn rewards. No lockup minimums, withdraw anytime. 
+            Your assets work for you 24/7.
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {stakingOptions.map((opt) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stakeOptions.map((stake) => (
             <div
-              key={opt.asset}
-              className="bg-card border border-border rounded-xl p-5 hover:border-primary/30 hover:shadow-lg transition-all group"
+              key={stake.sym}
+              className="bg-background border border-border rounded-xl p-6 text-center hover:border-primary/50 transition-all hover:shadow-lg"
             >
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg mb-4"
-                style={{ backgroundColor: opt.color }}
-              >
-                <Crypto3D asset={opt.asset} size={26} />
+              <div className="flex justify-center mb-4">
+                {getCryptoIcon(stake.sym, 48)}
               </div>
-              <div className="font-semibold text-foreground text-lg">{opt.name}</div>
-              <div className="text-sm text-muted-foreground mb-3">{opt.asset}</div>
-              <div className="flex items-center gap-1">
-                <TrendingUp className="w-4 h-4 text-success" />
-                <span className="text-success font-bold text-lg">{opt.apy}</span>
-                <span className="text-xs text-muted-foreground ml-1">APY</span>
-              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-1">
+                {stake.name}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-3">{stake.sym}</p>
+              <div className="text-2xl font-bold text-primary">{stake.apy}%</div>
+              <p className="text-xs text-muted-foreground mt-1">APY</p>
             </div>
           ))}
-        </div>
-
-        <div className="text-center">
-          <Button size="lg" className="rounded-full font-semibold px-8">
-            Start Earning
-          </Button>
         </div>
       </div>
     </section>
   );
-};
-
-export default StakeSection;
+}

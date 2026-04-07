@@ -22,10 +22,21 @@ const HeroSection = () => {
 
   const navigate = useNavigate();
 
-  // 3D tilt: tilts as you scroll past, returns to normal
+  // 3D tilt effects (applies to both)
   const rotateX = useTransform(scrollYProgress, [0, 0.3, 0.5, 0.7, 1], [0, 12, 0, -8, 0]);
   const rotateY = useTransform(scrollYProgress, [0, 0.3, 0.5, 0.7, 1], [0, -6, 0, 4, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 1.02, 1]);
+
+  // More dramatic zoom (zooms to 1.3x)
+  const scale = useTransform(scrollYProgress, [0.2, 0.5, 0.8], [1, 1.3, 1]);
+
+  // Parallax movement (image moves opposite direction)
+  const y = useTransform(scrollYProgress, [0.2, 0.5, 0.8], [0, -40, 0]);
+
+  // Zoom effect only for mobile (using the dramatic scale)
+  const mobileScale = scale;
+  
+  // Desktop keeps scale at 1 (no zoom)
+  const desktopScale = 1;
 
   return (
     <section className="relative overflow-hidden">
@@ -39,10 +50,9 @@ const HeroSection = () => {
               Call & Put Options on BTC & ETH.<br />
               Perpetuals on BTC, ETH and 50+ Alts
             </p>
-            {/* Full-width rounded button on mobile, normal on desktop */}
             <Button
               size="lg"
-              className="w-full md:w-auto text-base font-semibold px-8 py-6 rounded-full"
+              className="w-full md:w-auto text-base font-semibold px-8 py-6 rounded-full relative z-20"
               onClick={() => navigate("/signup")}
             >
               Sign Up Now
@@ -50,22 +60,30 @@ const HeroSection = () => {
           </div>
 
           {/* Hero image with 3D scroll effect */}
-          <div ref={imageRef} className="relative flex justify-center" style={{ perspective: 1200 }}>
+          <div ref={imageRef} className="relative flex justify-center overflow-visible" style={{ perspective: 1200, overflow: 'visible' }}>
             <div className="absolute inset-0 bg-primary/5 rounded-full blur-3xl scale-75" />
-            {/* Phone image: mobile only, scaled up 30% */}
+            
+            {/* Phone image - mobile only WITH zoom effect */}
             <motion.img
               src={heroPhone}
               alt="AnexmintMining trading app"
               width={500}
               height={500}
-              className="relative z-10 w-[130%] max-w-[520px] drop-shadow-2xl md:hidden"
+              className="relative z-10 w-[130%] max-w-[520px] drop-shadow-2xl md:hidden pointer-events-none"
               style={{
                 rotateX,
                 rotateY,
-                scale,
+                scale: mobileScale,
+                y,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30
               }}
             />
-            {/* Desktop dashboard image: md+ only */}
+            
+            {/* Desktop dashboard image - NO zoom effect */}
             <motion.img
               src={dashboardDesktop}
               alt="AnexmintMining dashboard"
@@ -73,12 +91,13 @@ const HeroSection = () => {
               style={{
                 rotateX,
                 rotateY,
-                scale,
+                scale: desktopScale,
                 WebkitMaskImage: "linear-gradient(180deg, black 72%, transparent 100%)",
                 maskImage: "linear-gradient(180deg, black 72%, transparent 100%)",
               }}
             />
-            {/* Fade overlay to blend image bottom into background on desktop */}
+            
+            {/* Fade overlay */}
             <div
               className="hidden md:block absolute left-0 right-0 bottom-0 h-40 pointer-events-none z-20 rounded-b-xl"
               style={{
