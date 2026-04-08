@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { formatUSD, formatCrypto, getCrypto } from '@/lib/utils';
-import { CIcon } from '@/components/CIcon';
 import { Modal } from './Modal';
 import { toast } from 'sonner';
 import { getCryptoIcon } from '@/lib/cryptoIcons';

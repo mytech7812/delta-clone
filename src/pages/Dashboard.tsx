@@ -102,6 +102,8 @@ const fetchUserTransactions = async () => {
       time: t.created_at ? new Date(t.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : undefined,
       status: t.status || 'pending',
       txHash: t.tx_hash || t.txHash || undefined,
+      adminNotes: t.admin_notes,  // ADD THIS LINE
+
     }));
 
     setTransactions(mapped);
@@ -145,6 +147,7 @@ const fetchUserTransactions = async () => {
       time: time,
       status: 'pending',
       adminWallet: deposit.adminWallet,
+      adminNotes: null,
     };
     
     // Add to transactions list

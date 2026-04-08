@@ -164,12 +164,11 @@ export async function getAllTransactions() {
   return transactionsWithUsers;
 }
 
-// Update transaction status
 export async function updateTransactionStatus(
   transactionId: number, 
   status: 'approved' | 'rejected', 
   adminId: string,
-  notes?: string
+  notes?: string  // Add this parameter
 ) {
   const { data, error } = await supabase
     .from('transactions')
@@ -177,7 +176,7 @@ export async function updateTransactionStatus(
       status,
       approved_at: new Date().toISOString(),
       approved_by: adminId,
-      admin_notes: notes
+      admin_notes: notes || null  // Save notes to database
     })
     .eq('id', transactionId)
     .select()
@@ -187,7 +186,6 @@ export async function updateTransactionStatus(
   
   // If approved and it's a deposit, update user balance
   if (status === 'approved' && data.type === 'deposit' && data.crypto_symbol && data.amount) {
-    // Get current balance
     const { data: currentBalance } = await supabase
       .from('user_balances')
       .select('balance')

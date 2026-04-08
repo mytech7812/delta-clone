@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { formatUSD, formatCrypto } from '@/lib/utils';
+
 type TransactionStatus = 'pending' | 'approved' | 'rejected';
 type TransactionType = 'deposit' | 'withdraw' | 'swap';
 
@@ -18,10 +20,13 @@ interface TransactionCardProps {
     from?: string;
     to?: string;
   };
-  onUpdateStatus: (id: number, status: 'approved' | 'rejected') => void;
+  onUpdateStatus: (id: number, status: 'approved' | 'rejected', notes: string) => void;
 }
 
 export function TransactionCard({ transaction, onUpdateStatus }: TransactionCardProps) {
+  const [notes, setNotes] = useState('');
+  const [showNotes, setShowNotes] = useState(false);
+
   const getStatusColor = () => {
     switch (transaction.status) {
       case 'approved': return 'var(--color-text-success)';
@@ -107,9 +112,9 @@ export function TransactionCard({ transaction, onUpdateStatus }: TransactionCard
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
           <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Amount</div>
-<div style={{ fontSize: 15, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-  {transaction.amount ? formatCrypto(transaction.amount) : '0'} {transaction.sym || transaction.to}
-</div>
+          <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+            {transaction.amount ? formatCrypto(transaction.amount) : ''} {transaction.sym || transaction.to}
+          </div>
         </div>
         <div>
           <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>USD Value</div>
@@ -125,10 +130,49 @@ export function TransactionCard({ transaction, onUpdateStatus }: TransactionCard
         </div>
       </div>
 
+      {/* Notes input - only show for pending transactions */}
+      {transaction.status === 'pending' && (
+        <div style={{ marginTop: 12, marginBottom: 12 }}>
+          {!showNotes ? (
+            <button
+              onClick={() => setShowNotes(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--brand)',
+                fontSize: 12,
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              + Add note (optional)
+            </button>
+          ) : (
+            <textarea
+              placeholder="Add a note for the user (e.g., reason for approval/rejection)"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: 'var(--color-background-secondary)',
+                border: '1px solid var(--color-border-tertiary)',
+                borderRadius: 8,
+                color: 'var(--color-text-primary)',
+                fontSize: 12,
+                resize: 'vertical',
+                fontFamily: 'inherit',
+              }}
+            />
+          )}
+        </div>
+      )}
+
       {transaction.status === 'pending' && (
         <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
           <button
-            onClick={() => onUpdateStatus(transaction.id, 'approved')}
+            onClick={() => onUpdateStatus(transaction.id, 'approved', notes)}
             style={{
               flex: 1,
               padding: '8px',
@@ -144,7 +188,7 @@ export function TransactionCard({ transaction, onUpdateStatus }: TransactionCard
             ✓ Approve
           </button>
           <button
-            onClick={() => onUpdateStatus(transaction.id, 'rejected')}
+            onClick={() => onUpdateStatus(transaction.id, 'rejected', notes)}
             style={{
               flex: 1,
               padding: '8px',

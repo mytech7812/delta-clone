@@ -148,23 +148,41 @@ export default function AdminDashboard() {
         // Get all balances
         const balancesData = await getAllUserBalances();
 
-        // Calculate total balance per user in USD using live prices
-        const usersWithBalance = usersData.map(user => {
-          const userBalancesFiltered = balancesData.filter(b => b.user_id === user.user_id);
-          const totalBalanceUSD = userBalancesFiltered.reduce((sum, b) => {
-            const sym = (b.crypto_symbol || '').toString().toUpperCase();
-            const price = (fetchedPrices.prices && fetchedPrices.prices[sym]) || 0;
-            return sum + (Number(b.balance || 0) * price);
-          }, 0);
-          return {
-            id: user.user_id,
-            email: user.email || 'No email',
-            name: user.full_name || 'Unknown',
-            createdAt: user.created_at,
-            totalBalance: totalBalanceUSD,
-            status: 'active' as const,
-          };
-        });
+        // Load cached prices first (so users don't see zero)
+let cachedPrices = {};
+try {
+  const raw = localStorage.getItem('anexmint:prices');
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.prices) {
+      cachedPrices = parsed.prices;
+      setPrices(cachedPrices); // Update state immediately with cached data
+    }
+  }
+} catch (e) { /* ignore */ }
+
+// Calculate total balance per user in USD using live prices (with fallback to cached)
+const usersWithBalance = usersData.map(user => {
+  const userBalances = balancesData.filter(b => b.user_id === user.user_id);
+  
+  // Use fetched prices if available, otherwise use cached prices from state
+  const activePrices = Object.keys(selectedPrices).length > 0 ? selectedPrices : cachedPrices;
+  
+  const totalBalanceUSD = userBalances.reduce((sum, b) => {
+    const sym = (b.crypto_symbol || '').toString().toUpperCase();
+    const price = activePrices[sym] || 0;
+    return sum + (Number(b.balance || 0) * price);
+  }, 0);
+  
+  return {
+    id: user.user_id,
+    email: user.email || 'No email',
+    name: user.full_name || 'Unknown',
+    createdAt: user.created_at,
+    totalBalance: totalBalanceUSD,
+    status: 'active' as const,
+  };
+});
 
         setUsers(usersWithBalance);
         localStorage.setItem('anexmint:admin_users', JSON.stringify(usersWithBalance));
@@ -292,35 +310,37 @@ export default function AdminDashboard() {
     totalVolume: transactions.reduce((sum, t) => sum + t.usd, 0),
   };
 
-  const handleUpdateTransactionStatus = async (id: number, status: 'approved' | 'rejected') => {
-    try {
-      await updateTransactionStatus(id, status, currentAdmin?.id || 'admin', `Transaction ${status} by admin`);
-      
-      setTransactions(prev =>
-        prev.map(tx =>
-          tx.id === id ? { ...tx, status: status as TransactionStatus } : tx
-        )
-      );
-      
-      toast.success(`Transaction ${status}!`);
-      
-      if (status === 'approved') {
-        const balancesData = await getAllUserBalances();
-        setUsers(prev => prev.map(user => {
-          const userBalancesFiltered = balancesData.filter(b => b.user_id === user.id);
-          const totalBalanceUSD = userBalancesFiltered.reduce((sum, b) => {
-            const sym = (b.crypto_symbol || '').toString().toUpperCase();
-            const p = prices[sym] || 0;
-            return sum + (Number(b.balance || 0) * p);
-          }, 0);
-          return { ...user, totalBalance: totalBalanceUSD };
-        }));
-      }
-    } catch (error) {
-      console.error('Error updating transaction:', error);
-      toast.error('Failed to update transaction');
+const handleUpdateTransactionStatus = async (id: number, status: 'approved' | 'rejected', notes: string) => {
+  try {
+    await updateTransactionStatus(id, status, currentAdmin?.id || 'admin', notes);
+    
+    // Update local state
+    setTransactions(prev =>
+      prev.map(tx =>
+        tx.id === id ? { ...tx, status: status as TransactionStatus } : tx
+      )
+    );
+    
+    toast.success(`Transaction ${status}!`);
+    
+    // Reload users to update balances if deposit was approved
+    if (status === 'approved') {
+      const balancesData = await getAllUserBalances();
+      setUsers(prev => prev.map(user => {
+        const userBalances = balancesData.filter(b => b.user_id === user.id);
+        const totalBalanceUSD = userBalances.reduce((sum, b) => {
+          const sym = (b.crypto_symbol || '').toString().toUpperCase();
+          const p = prices[sym] || 0;
+          return sum + (Number(b.balance || 0) * p);
+        }, 0);
+        return { ...user, totalBalance: totalBalanceUSD };
+      }));
     }
-  };
+  } catch (error) {
+    console.error('Error updating transaction:', error);
+    toast.error('Failed to update transaction');
+  }
+};
 
   const handleUpdateUserBalance = async (userId: string, cryptoSymbol: string, newBalance: number) => {
     try {
