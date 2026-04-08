@@ -190,12 +190,12 @@ export function TransactionDetailModal({ isOpen, onClose, transaction }: Transac
 {transaction.status === 'approved' && (
   <div
     style={{
-      background: transaction.adminNotes ? 'rgba(194, 27, 52, 0.17)' : 'rgba(16,185,129,0.08)',
+      background: 'rgba(16,185,129,0.08)',  // Green, not blue
       borderRadius: 12,
       padding: 12,
       textAlign: 'left',
       marginBottom: 16,
-      border: transaction.adminNotes ? '1px solid rgba(0,153,255,0.2)' : 'none',
+      border: transaction.adminNotes ? '1px solid rgba(16,185,129,0.2)' : 'none',
     }}
   >
     {transaction.adminNotes ? (
