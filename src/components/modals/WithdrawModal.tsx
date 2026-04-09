@@ -13,7 +13,7 @@ interface WithdrawModalProps {
 }
 
 // Only these coins are available for withdrawal
-const AVAILABLE_WITHDRAWALS = ['USDT', 'USDC', 'ETH', 'BTC'];
+const AVAILABLE_WITHDRAWALS: string[] = [];
 
 export function WithdrawModal({ initSym, prices, holdings, onClose, onConvert }: WithdrawModalProps) {
   const [step, setStep] = useState(1);
