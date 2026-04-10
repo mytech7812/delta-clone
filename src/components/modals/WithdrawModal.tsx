@@ -102,55 +102,75 @@ export function WithdrawModal({ initSym, prices, holdings, onClose, onConvert }:
   // Step 2: Withdrawal form
   return (
     <Modal title={`Withdraw ${sym}`} onClose={onClose} onBack={() => setStep(1)}>
-      {!isAvailable ? (
-        <div
-          style={{
-            background: 'rgba(245, 158, 11, 0.1)',
-            borderRadius: 16,
-            padding: 24,
-            marginBottom: 20,
-            border: '1px solid rgba(245, 158, 11, 0.3)',
-            textAlign: 'center',
-          }}
-        >
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              background: 'rgba(245, 158, 11, 0.15)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 28,
-              margin: '0 auto 16px',
-            }}
-          >
-            ⚠️
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text-warning)', marginBottom: 8 }}>
-            {sym} Withdrawals Unavailable
-          </div>
-          <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', marginBottom: 24 }}>
-            {sym} withdrawals are unavailable at this time, convert to USDT to proceed
-          </div>
-          <button
-            onClick={handleConvert}
-            style={{
-              padding: '12px 24px',
-              background: 'var(--brand)',
-              border: 'none',
-              borderRadius: 12,
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            Convert to USDT
-          </button>
-        </div>
-      ) : (
+{!isAvailable ? (
+  <div
+    style={{
+      background: 'rgba(245, 158, 11, 0.1)',
+      borderRadius: 16,
+      padding: 24,
+      marginBottom: 20,
+      border: '1px solid rgba(245, 158, 11, 0.3)',
+      textAlign: 'center',
+    }}
+  >
+    <div
+      style={{
+        width: 56,
+        height: 56,
+        background: 'rgba(245, 158, 11, 0.15)',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 28,
+        margin: '0 auto 16px',
+      }}
+    >
+      ⚠️
+    </div>
+    <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text-warning)', marginBottom: 8 }}>
+      {sym} Withdrawals Unavailable
+    </div>
+    <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', marginBottom: 24 }}>
+      {sym} withdrawals are currently unavailable.
+    </div>
+    <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16 }}>
+      Please contact support to convert your {sym} to USDT for withdrawal.
+    </div>
+<div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+  <button
+    onClick={() => window.location.href = `mailto:annexmintmining@gmail.com?subject=Withdrawal Request: Convert ${sym} to USDT&body=Hello Support,%0D%0A%0D%0AI would like to convert my ${sym} to USDT for withdrawal.%0D%0A%0D%0AMy ${sym} balance: ${formatCrypto(maxAmount)} ${sym}%0D%0A%0D%0APlease assist.%0D%0A%0D%0AThank you.`}
+    style={{
+      padding: '10px 20px',
+      background: 'var(--brand)',
+      border: 'none',
+      borderRadius: 10,
+      color: '#fff',
+      fontSize: 13,
+      fontWeight: 500,
+      cursor: 'pointer',
+    }}
+      >
+        📧 Email Support
+      </button>
+      <button
+        onClick={onClose}
+        style={{
+          padding: '10px 20px',
+          background: 'transparent',
+          border: '1px solid var(--color-border-tertiary)',
+          borderRadius: 10,
+          color: 'var(--color-text-secondary)',
+          fontSize: 13,
+          fontWeight: 500,
+          cursor: 'pointer',
+        }}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+) : (
         <>
           {/* Balance display */}
           <div
