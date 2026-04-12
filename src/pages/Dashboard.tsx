@@ -22,6 +22,7 @@ import { MarketOverview } from '@/components/MarketOverview';
 import { History } from '@/components/History';
 import { Settings } from '@/components/Settings';
 import { MobileSidebar } from '@/components/dashboard/MobileSidebar';
+import { AssetRecovery } from '@/components/AssetRecovery';
 import { TokenBTC, TokenETH, TokenSOL, TokenBNB, TokenXRP, TokenUSDC, TokenADA, TokenUSDT } from '@web3icons/react';import '@/styles/dashboard.css';
 
 interface Transaction {
@@ -967,7 +968,13 @@ if (loading || holdingsLoading) {
   </div>
 )}
 
-{activeNav !== 'dashboard' && activeNav !== 'markets' && activeNav !== 'settings' && activeNav !== 'history' && (
+{activeNav === 'asset-recovery' && (
+  <div className="content">
+    <AssetRecovery />
+  </div>
+)}
+
+{activeNav !== 'dashboard' && activeNav !== 'markets' && activeNav !== 'settings' && activeNav !== 'history' && activeNav !== 'asset-recovery' && (
   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 400, gap: 12 }}>
     <div style={{ fontSize: 36 }}>🚧</div>
     <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--color-text-primary)' }}>{NAV_ITEMS.find(n => n.id === activeNav)?.label}</div>

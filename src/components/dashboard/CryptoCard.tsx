@@ -1,6 +1,5 @@
 import { formatUSD, formatCrypto, getCrypto } from '@/lib/utils';
-import { CIcon } from '@/components/CIcon';
-import { TokenBTC, TokenETH, TokenSOL, TokenUSDT, TokenBNB, TokenXRP, TokenADA } from '@web3icons/react';
+import { getCryptoIcon } from '@/lib/cryptoIcons';
 
 interface CryptoCardProps {
   sym: string;
@@ -8,20 +7,6 @@ interface CryptoCardProps {
   holding?: number;
   onClick: () => void;
 }
-
-const getCryptoIcon = (sym: string, size: number) => {
-  const iconProps = { size, variant: 'branded' as const };
-  switch(sym) {
-    case 'BTC': return <TokenBTC {...iconProps} />;
-    case 'ETH': return <TokenETH {...iconProps} />;
-    case 'SOL': return <TokenSOL {...iconProps} />;
-    case 'USDT': return <TokenUSDT {...iconProps} />;
-    case 'BNB': return <TokenBNB {...iconProps} />;
-    case 'XRP': return <TokenXRP {...iconProps} />;
-    case 'ADA': return <TokenADA {...iconProps} />;
-    default: return <CIcon sym={sym} size={size} />;
-  }
-};
 
 export function CryptoCard({ sym, price, holding = 0, onClick }: CryptoCardProps) {
   const crypto = getCrypto(sym);

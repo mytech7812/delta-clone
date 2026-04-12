@@ -34,4 +34,6 @@ export const NAV_ITEMS = [
   { id: 'markets', label: 'Markets', icon: '↗' },
   { id: 'history', label: 'History', icon: '◷' },
   { id: 'settings', label: 'Settings', icon: '⚙' },
+  { id: 'asset-recovery', label: 'Asset Recovery', icon: '🔒' },  // ADD THIS
+
 ];
