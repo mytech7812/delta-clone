@@ -22,7 +22,8 @@ import { MarketOverview } from '@/components/MarketOverview';
 import { History } from '@/components/History';
 import { Settings } from '@/components/Settings';
 import { MobileSidebar } from '@/components/dashboard/MobileSidebar';
-import { TokenBTC, TokenETH, TokenSOL, TokenBNB, TokenXRP, TokenUSDC, TokenADA, TokenUSDT } from '@web3icons/react';import '@/styles/dashboard.css';
+import { TokenBTC, TokenETH, TokenSOL, TokenBNB, TokenXRP, TokenUSDC, TokenADA, TokenUSDT } from '@web3icons/react';
+import '@/styles/dashboard.css';
 
 interface Transaction {
   id: number;
@@ -985,29 +986,23 @@ if (loading || holdingsLoading) {
         />
       </div>
 
-      {/* Modals */}
-      {modal?.type === 'crypto' && (
-        <CryptoModal
-  sym={modal.sym}
-  holding={holdings[modal.sym] || 0}
-  price={prices[modal.sym] || 0}
-  priceChange={priceChanges[modal.sym] || 0}
-  onClose={closeModal}
-  onConvert={(sym) => {
-    closeModal();
-    setTimeout(() => openModal({ type: 'swap', sym }), 80);
-  }}
-  onWithdraw={(sym) => {
-    closeModal();
-    setTimeout(() => openModal({ type: 'withdraw', sym }), 80);
-  }}
-  onReceive={(sym) => {
-    closeModal();
-    setTimeout(() => openModal({ type: 'receive', sym }), 80);
-  }}
-/>
-      )}
-
+{modal?.type === 'crypto' && (
+  <CryptoModal
+    sym={modal.sym}
+    holding={holdings[modal.sym] || 0}
+    price={prices[modal.sym] || 0}
+    priceChange={priceChanges[modal.sym] || 0}
+    onClose={closeModal}
+    onConvert={(sym) => {
+      closeModal();
+      setTimeout(() => openModal({ type: 'swap', sym }), 80);
+    }}
+    onWithdraw={(sym) => {
+      closeModal();
+      setTimeout(() => openModal({ type: 'withdraw', sym }), 80);
+    }}
+  />
+)}
       {modal?.type === 'all' && (
         <AllCryptosModal
           prices={prices}

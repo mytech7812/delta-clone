@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { CIcon } from '@/components/CIcon';
 import { Modal } from './Modal';
 import { getCryptoIcon } from '@/lib/cryptoIcons';
+import { getAdminWallet } from '@/lib/adminWallets';
+import { toast } from 'sonner';
 
 interface ReceiveModalProps {
   sym: string;
@@ -10,12 +11,13 @@ interface ReceiveModalProps {
 
 export function ReceiveModal({ sym, onClose }: ReceiveModalProps) {
   const [copied, setCopied] = useState(false);
-  const address = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
+  const address = getAdminWallet(sym);
 
   const copyAddress = () => {
     navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    toast.success('Address copied!');
   };
 
   return (

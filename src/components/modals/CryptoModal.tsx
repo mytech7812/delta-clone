@@ -1,5 +1,4 @@
 import { formatUSD, formatCrypto, getCrypto } from '@/lib/utils';
-import { CIcon } from '@/components/CIcon';
 import { getCryptoIcon } from '@/lib/cryptoIcons';
 import { Modal } from './Modal';
 
@@ -11,7 +10,6 @@ interface CryptoModalProps {
   onClose: () => void;
   onConvert: (sym: string) => void;
   onWithdraw: (sym: string) => void;
-  onReceive: (sym: string) => void;
 }
 
 export function CryptoModal({
@@ -22,7 +20,6 @@ export function CryptoModal({
   onClose,
   onConvert,
   onWithdraw,
-  onReceive,
 }: CryptoModalProps) {
   const crypto = getCrypto(sym);
   const usdValue = holding * price;
@@ -71,10 +68,9 @@ export function CryptoModal({
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         {[
           { label: 'Withdraw', color: '#ef4444', onClick: () => onWithdraw(sym) },
-          { label: 'Receive', color: '#10b981', onClick: () => onReceive(sym) },
           { label: 'Convert', color: '#0099ff', onClick: () => onConvert(sym) },
         ].map(({ label, color, onClick }) => (
           <button
@@ -93,7 +89,7 @@ export function CryptoModal({
               transition: 'background 0.15s',
             }}
           >
-            <span style={{ fontSize: 16 }}>{label === 'Withdraw' ? '↑' : label === 'Receive' ? '↓' : '↔'}</span>
+            <span style={{ fontSize: 16 }}>{label === 'Withdraw' ? '↑' : '↔'}</span>
             <span style={{ color, fontSize: 12, fontWeight: 500 }}>{label}</span>
           </button>
         ))}
