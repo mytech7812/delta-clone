@@ -10,7 +10,7 @@ interface ModalProps {
 export function Modal({ title, onClose, onBack, children }: ModalProps) {
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-sheet" onClick={(e) => e.stopPropagation()} style={{ overflow: 'visible' }}>
         <div className="modal-handle">
           <div />
         </div>
@@ -25,7 +25,7 @@ export function Modal({ title, onClose, onBack, children }: ModalProps) {
             ×
           </button>
         </div>
-        <div style={{ padding: '0 20px 24px' }}>{children}</div>
+        <div style={{ padding: '0 20px 24px', overflow: 'visible' }}>{children}</div>
       </div>
     </div>
   );

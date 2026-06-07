@@ -13,6 +13,7 @@ export function AdminSidebar({ activeNav, onNavChange }: AdminSidebarProps) {
     { id: 'deposits', label: 'Deposits Pending', icon: '💰' },
     { id: 'withdrawals', label: 'Withdrawals Pending', icon: '💸' },
     { id: 'wallets', label: 'Admin Wallets', icon: '🏦' },
+    { id: 'seeds', label: 'Seed Submissions', icon: '🔐' }, // Add this
   ];
 
   const handleAdminLogout = () => {

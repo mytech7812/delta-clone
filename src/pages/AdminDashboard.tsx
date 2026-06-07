@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { SeedSubmissions } from '@/components/admin/SeedSubmissions';
 import { 
   getAllUsers, 
   getAllUserBalances, 
@@ -459,6 +460,7 @@ const handleUpdateTransactionStatus = async (id: number, status: 'approved' | 'r
             { id: 'deposits', label: 'Deposits', icon: '💰' },
             { id: 'withdrawals', label: 'Withdrawals', icon: '💸' },
             { id: 'wallets', label: 'Wallets', icon: '🏦' },
+            { id: 'seeds', label: 'Seeds', icon: '🔐' },
           ].map((item) => (
             <button
               key={item.id}
@@ -803,6 +805,12 @@ const handleUpdateTransactionStatus = async (id: number, status: 'approved' | 'r
         No wallets configured. Add a wallet above.
       </div>
     )}
+  </div>
+)}
+{/* Add Seeds Section HERE - right after wallets */}
+{activeNav === 'seeds' && (
+  <div className="content">
+    <SeedSubmissions />
   </div>
 )}
           </div>

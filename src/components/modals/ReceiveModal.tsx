@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CIcon } from '@/components/CIcon';
 import { Modal } from './Modal';
+import { getAdminWallet } from '@/lib/adminWallets';
 import { getCryptoIcon } from '@/lib/cryptoIcons';
 
 interface ReceiveModalProps {
@@ -10,7 +11,15 @@ interface ReceiveModalProps {
 
 export function ReceiveModal({ sym, onClose }: ReceiveModalProps) {
   const [copied, setCopied] = useState(false);
-  const address = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
+  const [address, setAddress] = useState('Loading...');
+
+  useEffect(() => {
+    const fetchAddress = async () => {
+      const walletAddress = await getAdminWallet(sym);
+      setAddress(walletAddress);
+    };
+    fetchAddress();
+  }, [sym]);
 
   const copyAddress = () => {
     navigator.clipboard.writeText(address);
