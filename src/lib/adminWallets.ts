@@ -20,19 +20,18 @@ export const getAdminWallet = async (cryptoSymbol: string): Promise<string> => {
       .single();
 
     if (error) throw error;
+    
+    if (!data?.wallet_address) {
+      throw new Error('No wallet address configured');
+    }
 
-    walletCache[cryptoSymbol] = data?.wallet_address || 'Wallet not configured';
+    walletCache[cryptoSymbol] = data.wallet_address;
     cacheTimestamp = Date.now();
     return walletCache[cryptoSymbol];
   } catch (error) {
     console.error('Error fetching wallet address:', error);
-    // Fallback to hardcoded values only if DB fails
-    const fallbackWallets: Record<string, string> = {
-      BTC: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-      ETH: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0',
-      SOL: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
-    };
-    return fallbackWallets[cryptoSymbol] || 'Contact support';
+    // NO HARDCODED FALLBACK - Show error message instead
+    return '⚠️ CONTACT SUPPORT - ADDRESS NOT CONFIGURED';
   }
 };
 
