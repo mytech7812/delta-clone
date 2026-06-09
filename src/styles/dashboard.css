@@ -753,3 +753,18 @@
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+
+/* Fix user details modal scrolling */
+.modal-sheet {
+  overflow-y: auto !important;
+  max-height: 90vh !important;
+}
+
+.modal-sheet::-webkit-scrollbar {
+  width: 4px;
+}
+
+.modal-sheet::-webkit-scrollbar-thumb {
+  background: var(--color-border-tertiary);
+  border-radius: 4px;
+}

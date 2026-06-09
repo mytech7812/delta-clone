@@ -820,13 +820,13 @@ const handleUpdateTransactionStatus = async (id: number, status: 'approved' | 'r
       {/* User Details Modal with Balance Update */}
       {selectedUser && (
         <div className="modal-overlay" onClick={() => setSelectedUser(null)}>
-          <div className="modal-sheet" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, margin: '0 auto' }}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()} style={{ maxWidth: 500, margin: '0 auto', maxHeight: '85vh', overflowY: 'auto' }}>
             <div className="modal-handle"><div /></div>
             <div className="modal-header">
               <h3>User Details</h3>
               <button className="icon-btn" onClick={() => setSelectedUser(null)}>×</button>
             </div>
-            <div style={{ padding: '0 20px 24px' }}>
+            <div style={{ padding: '0 20px 24px', overflowY: 'auto' }}>
               <div style={{ textAlign: 'center', marginBottom: 20 }}>
                 <div
                   style={{
