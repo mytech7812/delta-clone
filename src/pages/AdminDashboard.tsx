@@ -73,6 +73,7 @@ export default function AdminDashboard() {
   const [editingWalletId, setEditingWalletId] = useState<number | null>(null);
   const [editAddress, setEditAddress] = useState('');
   const [copiedWalletId, setCopiedWalletId] = useState<number | null>(null);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [newWallet, setNewWallet] = useState({ crypto_symbol: '', wallet_address: '', network: '' });
 
@@ -389,6 +390,111 @@ const handleUpdateTransactionStatus = async (id: number, status: 'approved' | 'r
       toast.error('Failed to update balance');
     }
   };
+
+  const handleWithdraw = async () => {
+  const crypto = (document.getElementById('withdrawCrypto') as HTMLSelectElement).value;
+  const amount = parseFloat((document.getElementById('withdrawAmount') as HTMLInputElement).value);
+  const walletAddress = (document.getElementById('withdrawAddress') as HTMLInputElement).value;
+
+  // Validation
+  if (!crypto || !amount || amount <= 0) {
+    toast.error('Please enter a valid amount');
+    return;
+  }
+  if (!walletAddress || walletAddress.length < 10) {
+    toast.error('Please enter a valid wallet address');
+    return;
+  }
+
+// Get current price for the crypto
+const currentPrice = prices[crypto] || 0;
+if (currentPrice === 0) {
+  toast.error(`Unable to fetch current price for ${crypto}`);
+  return;
+}
+
+// Convert USD to crypto amount
+const cryptoAmount = amount / currentPrice;
+
+// Check if user has enough balance (in crypto)
+const userBalance = userBalances.find(b => b.crypto_symbol === crypto);
+if (!userBalance || userBalance.balance < cryptoAmount) {
+  toast.error(`Insufficient ${crypto} balance. Available: ${userBalance?.balance || 0} ${crypto}`);
+  return;
+}
+
+  try {
+    // Get current admin
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Admin not authenticated');
+
+// Get current price for the crypto
+const currentPrice = prices[crypto] || 0;
+if (currentPrice === 0) {
+  toast.error(`Unable to fetch current price for ${crypto}`);
+  return;
+}
+
+// Convert USD to crypto amount
+const cryptoAmount = amount / currentPrice;
+
+// Check if user has enough balance (in crypto)
+const userBalance = userBalances.find(b => b.crypto_symbol === crypto);
+if (!userBalance || userBalance.balance < cryptoAmount) {
+  toast.error(`Insufficient ${crypto} balance. Available: ${userBalance?.balance || 0} ${crypto}`);
+  return;
+}
+
+// 1. Update user's balance (deduct crypto amount)
+const newBalance = userBalance.balance - cryptoAmount;
+await updateUserBalance(selectedUser.id, crypto, newBalance, user.id, `Admin withdrawal of ${cryptoAmount} ${crypto} ($${amount} USD)`);
+
+// 2. Create transaction record
+const { data: tx, error: txError } = await supabase
+  .from('transactions')
+  .insert({
+    user_id: selectedUser.id,
+    type: 'withdraw',
+    crypto_symbol: crypto,
+    amount: cryptoAmount,
+    usd_amount: amount,  // Store the USD amount entered by admin
+    status: 'approved',
+    admin_notes: `Admin initiated withdrawal of $${amount} USD worth of ${crypto} to: ${walletAddress}`,
+    created_at: new Date().toISOString(),
+    approved_at: new Date().toISOString(),
+    approved_by: user.id
+  })
+  .select()
+  .single();
+
+if (txError) throw txError;
+
+// 3. Show success message
+toast.success(`${selectedUser.name} has successfully withdrawn $${amount} USD worth of ${crypto}`);
+
+    // 4. Close modal and refresh data
+    setShowWithdrawModal(false);
+    setSelectedUser(null);
+    // Refresh user data
+    const balancesData = await getAllUserBalances();
+    setUsers(prev => prev.map(u => {
+      if (u.id === selectedUser.id) {
+        const userBalances = balancesData.filter(b => b.user_id === selectedUser.id);
+        const totalBalanceUSD = userBalances.reduce((sum, b) => {
+          const sym = (b.crypto_symbol || '').toString().toUpperCase();
+          const p = prices[sym] || 0;
+          return sum + (Number(b.balance || 0) * p);
+        }, 0);
+        return { ...u, totalBalance: totalBalanceUSD };
+      }
+      return u;
+    }));
+
+  } catch (error) {
+    console.error('Withdrawal error:', error);
+    toast.error('Failed to process withdrawal');
+  }
+};
 
   if (loading) {
     return (
@@ -1004,14 +1110,109 @@ const handleUpdateTransactionStatus = async (id: number, status: 'approved' | 'r
                   This will REPLACE the user's current balance for the selected asset
                 </p>
               </div>
+
+              {/* Withdraw Button - ADD THIS BEFORE THE CLOSE BUTTON */}
+<button
+  onClick={() => {
+    setShowWithdrawModal(true);
+  }}
+  className="primary-btn"
+  style={{
+    marginTop: 12,
+    background: '#ef4444',
+  }}
+>
+   Withdraw 
+</button>
+
+<button
+  className="primary-btn"
+  onClick={() => setSelectedUser(null)}
+  style={{ marginTop: 16 }}
+>
+  Close
+</button>
+
+{/* Withdraw Modal (slides up from bottom) */}
+{showWithdrawModal && (
+  <div 
+    className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center"
+    onClick={() => setShowWithdrawModal(false)}
+  >
+    <div 
+      className="bg-background rounded-t-2xl w-full max-w-md max-h-[80vh] overflow-y-auto p-6"
+      onClick={(e) => e.stopPropagation()}
+      style={{ animation: 'slideUp 0.25s ease-out' }}
+    >
+      {/* Drag handle */}
+      <div className="flex justify-center mb-4">
+        <div className="w-12 h-1 bg-border rounded-full" />
+      </div>
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-semibold text-foreground">Withdraw Funds</h3>
+        <button 
+          onClick={() => setShowWithdrawModal(false)}
+          className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center"
+        >
+          <span className="text-muted-foreground">✕</span>
+        </button>
+      </div>
+
+      {/* Form */}
+      <div className="space-y-4">
+        <div>
+          <label className="text-sm font-medium text-foreground mb-1 block">Select Cryptocurrency</label>
+          <select
+            id="withdrawCrypto"
+            className="w-full h-11 rounded-xl border border-border bg-background px-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="BTC">Bitcoin (BTC)</option>
+            <option value="ETH">Ethereum (ETH)</option>
+            <option value="SOL">Solana (SOL)</option>
+            <option value="USDT">Tether (USDT)</option>
+            <option value="USDC">USD Coin (USDC)</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-foreground mb-1 block">Amount</label>
+          <input
+            id="withdrawAmount"
+            type="number"
+            step="any"
+            placeholder="Enter amount"
+            className="w-full h-11 rounded-xl border border-border bg-background px-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-foreground mb-1 block">Wallet Address</label>
+          <input
+            id="withdrawAddress"
+            type="text"
+            placeholder="Enter wallet address (e.g., 0x... or bc1...)"
+            className="w-full h-11 rounded-xl border border-border bg-background px-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+          />
+        </div>
+
+<button
+  onClick={handleWithdraw}
+  className="w-full h-11 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors"
+>
+  Confirm Withdrawal
+</button>
+
+        <p className="text-xs text-muted-foreground text-center">
+          This will permanently deduct funds from the user's balance
+        </p>
+      </div>
+    </div>
+  </div>
+)}
               
-              <button
-                className="primary-btn"
-                onClick={() => setSelectedUser(null)}
-                style={{ marginTop: 16 }}
-              >
-                Close
-              </button>
+
             </div>
           </div>
         </div>

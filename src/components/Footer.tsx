@@ -14,7 +14,7 @@ const Footer = () => {
         <div className="flex flex-wrap items-center justify-between gap-4 pb-8 mb-8 border-b border-background/10">
           <h3 className="text-xl font-bold">24x7 Customer Support</h3>
           <div className="flex flex-wrap items-center gap-6">
-            <a href="mailto:support@anexmintmining.com" className="flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors">
+            <a href="mailto:annexmintmining@gmail.com" className="flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors">
               <Mail className="w-4 h-4" /> support@anexmintmining.com
             </a>
             <a href="#" className="flex items-center gap-2 text-sm text-background/70 hover:text-background transition-colors">
