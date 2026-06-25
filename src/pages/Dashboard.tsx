@@ -270,12 +270,10 @@ useEffect(() => {
           return;
         }
         
-        if (profile?.status === 'suspended') {
-          toast.error('Your account has been suspended. Please contact support.');
-          await supabase.auth.signOut();
-          navigate('/');
-          return;
-        }
+if (profile?.status === 'suspended') {
+  navigate('/suspended');
+  return;
+}
       } catch (err) {
         console.error('Status check error:', err);
       }
