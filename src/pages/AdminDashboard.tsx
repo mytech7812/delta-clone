@@ -182,7 +182,7 @@ const usersWithBalance = usersData.map(user => {
     name: user.full_name || 'Unknown',
     createdAt: user.created_at,
     totalBalance: totalBalanceUSD,
-    status: 'active' as const,
+    status: user.status || 'active',  // ADD THIS LINE
   };
 });
 
