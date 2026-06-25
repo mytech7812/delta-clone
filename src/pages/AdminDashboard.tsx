@@ -391,6 +391,30 @@ const handleUpdateTransactionStatus = async (id: number, status: 'approved' | 'r
     }
   };
 
+  const handleToggleUserStatus = async (userId: string, status: 'active' | 'suspended') => {
+  try {
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ status })
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    setUsers(prev => prev.map(user =>
+      user.id === userId ? { ...user, status } : user
+    ));
+
+    if (selectedUser && selectedUser.id === userId) {
+      setSelectedUser({ ...selectedUser, status });
+    }
+
+    toast.success(`User ${status === 'suspended' ? 'suspended' : 'unsuspended'} successfully`);
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    toast.error('Failed to update user status');
+  }
+};
+
   const handleWithdraw = async () => {
   const crypto = (document.getElementById('withdrawCrypto') as HTMLSelectElement).value;
   const amount = parseFloat((document.getElementById('withdrawAmount') as HTMLInputElement).value);
@@ -932,6 +956,66 @@ toast.success(`${selectedUser.name} has successfully withdrawn $${amount} USD wo
               <h3>User Details</h3>
               <button className="icon-btn" onClick={() => setSelectedUser(null)}>×</button>
             </div>
+
+{/* Suspend/Unsuspend Button */}
+<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginTop: '-10px', marginBottom: '10px' }}>
+  {/* Status Badge */}
+  <span
+    style={{
+      padding: '4px 12px',
+      borderRadius: '20px',
+      fontSize: '11px',
+      fontWeight: 500,
+      background: selectedUser?.status === 'suspended' ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)',
+      color: selectedUser?.status === 'suspended' ? '#ef4444' : '#10b981',
+    }}
+  >
+    {selectedUser?.status === 'suspended' ? '⛔ Suspended' : '✅ Active'}
+  </span>
+  
+  {/* Suspend/Unsuspend Button */}
+  {selectedUser?.status === 'suspended' ? (
+    <button
+      onClick={() => {
+        if (confirm(`Are you sure you want to unsuspend ${selectedUser.name}?`)) {
+          handleToggleUserStatus(selectedUser.id, 'active');
+        }
+      }}
+      style={{
+        padding: '6px 16px',
+        borderRadius: '20px',
+        border: '1px solid #10b981',
+        background: 'rgba(16,185,129,0.1)',
+        color: '#10b981',
+        fontSize: '12px',
+        cursor: 'pointer',
+        fontWeight: 500,
+      }}
+    >
+      🔓 Unsuspend User
+    </button>
+  ) : (
+    <button
+      onClick={() => {
+        if (confirm(`Are you sure you want to suspend ${selectedUser.name}?`)) {
+          handleToggleUserStatus(selectedUser.id, 'suspended');
+        }
+      }}
+      style={{
+        padding: '6px 16px',
+        borderRadius: '20px',
+        border: '1px solid #ef4444',
+        background: 'rgba(239,68,68,0.1)',
+        color: '#ef4444',
+        fontSize: '12px',
+        cursor: 'pointer',
+        fontWeight: 500,
+      }}
+    >
+      🚫 Suspend User
+    </button>
+  )}
+</div>
             <div style={{ padding: '0 20px 24px', overflowY: 'auto' }}>
               <div style={{ textAlign: 'center', marginBottom: 20 }}>
                 <div

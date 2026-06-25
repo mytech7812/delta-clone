@@ -251,11 +251,35 @@ useEffect(() => {
     if (!mounted) return;
     
     if (!session) {
-      // No session, stay on login page
       setLoading(false);
     } else {
       setUserEmail(session.user.email || null);
       setUser(session.user);
+      
+      // CHECK IF USER IS SUSPENDED
+      try {
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('status')
+          .eq('user_id', session.user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching user status:', error);
+          setLoading(false);
+          return;
+        }
+        
+        if (profile?.status === 'suspended') {
+          toast.error('Your account has been suspended. Please contact support.');
+          await supabase.auth.signOut();
+          navigate('/');
+          return;
+        }
+      } catch (err) {
+        console.error('Status check error:', err);
+      }
+      
       setLoading(false);
     }
   };
@@ -266,7 +290,6 @@ useEffect(() => {
     if (!mounted) return;
     
     if (!session) {
-      // User manually signed out
       navigate('/');
       setUser(null);
       setUserEmail(null);
